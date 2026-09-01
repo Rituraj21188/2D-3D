@@ -497,33 +497,48 @@
     let animationFrameId = null;
     let is3dInitialized = false;
 
-    // Center coordinates matching your site data
-    const SITE_CENTER = [35.530501, 64.643555];
+    // --- EXACT BOUNDS FROM YOUR TILEMAPRESOURCE.XML ---
+    const MIN_LAT = 25.21063054697481;
+    const MAX_LAT = 25.21277826092301;
+    const MIN_LNG = 91.06061914668449;
+    const MAX_LNG = 91.06305746574276;
+
+    // Center point
+    const SITE_CENTER = [
+      (MIN_LAT + MAX_LAT) / 2, // ~25.211704
+      (MIN_LNG + MAX_LNG) / 2  // ~91.061838
+    ];
+
+    // Bounding Box to lock the screen
     const SITE_BOUNDS = L.latLngBounds(
-      [SITE_CENTER[0] - 0.02, SITE_CENTER[1] - 0.02],
-      [SITE_CENTER[0] + 0.02, SITE_CENTER[1] + 0.02]
+      [MIN_LAT, MIN_LNG],
+      [MAX_LAT, MAX_LNG]
     );
 
-    // 1. Initialize 2D Leaflet View with Locked Bounds
+    // Buffer bounds to allow slight panning around the site
+    const PAN_BOUNDS = SITE_BOUNDS.pad(0.5);
+
+    // 1. Initialize 2D Leaflet Map
     function init2DMap() {
       map2d = L.map('view-2d', {
         zoomControl: false,
         attributionControl: false,
         center: SITE_CENTER,
-        zoom: 16,
-        minZoom: 14,
+        zoom: 18,
+        minZoom: 10,
         maxZoom: 22,
-        maxBounds: SITE_BOUNDS,
+        maxBounds: PAN_BOUNDS,
         maxBoundsViscosity: 1.0
       });
 
-      // Satellite basemap
+      // High-resolution Satellite background
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 20
+        maxZoom: 22
       }).addTo(map2d);
 
-      // Tile layer configurations (tms: true enables standard GDAL XYZ inversion)
-      const layerOpts = {
+      // Tile Configuration from your TileSet profile (Zoom 10 - 20, TMS)
+      const tileConfig = {
+        minZoom: 10,
         maxNativeZoom: 20,
         maxZoom: 22,
         tms: true,
@@ -531,19 +546,22 @@
       };
 
       tileLayers = {
-        ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', layerOpts),
-        dsm: L.tileLayer('./data/dsm/{z}/{x}/{y}.png', layerOpts),
-        dtm: L.tileLayer('./data/dtm/{z}/{x}/{y}.png', layerOpts)
+        ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', tileConfig),
+        dsm: L.tileLayer('./data/dsm/{z}/{x}/{y}.png', tileConfig),
+        dtm: L.tileLayer('./data/dtm/{z}/{x}/{y}.png', tileConfig)
       };
 
+      // Add default Orthomosaic layer
       currentTileLayer = tileLayers.ortho;
       currentTileLayer.addTo(map2d);
+
+      // Zoom and fit precisely to the Orthomosaic boundary
       map2d.fitBounds(SITE_BOUNDS);
 
-      // Update coordinate telemetry
+      // Coordinate & Layer Telemetry
       map2d.on('mousemove', (e) => {
         document.getElementById('coord-display').innerText = 
-          `Lat: ${e.latlng.lat.toFixed(6)}° | Lng: ${e.latlng.lng.toFixed(6)}° | Layer: ${activeRasterType.toUpperCase()}`;
+          `Lat: ${e.latlng.lat.toFixed(6)}° | Lng: ${e.latlng.lng.toFixed(6)}° | Zoom: ${map2d.getZoom()} | Layer: ${activeRasterType.toUpperCase()}`;
       });
     }
 
@@ -567,6 +585,9 @@
       document.querySelectorAll('.layer-option').forEach(el => el.classList.remove('active'));
       const activeCard = document.getElementById(`layer-card-${type}`);
       if (activeCard) activeCard.classList.add('active');
+
+      document.getElementById('coord-display').innerText = 
+        `Lat: ${map2d.getCenter().lat.toFixed(6)}° | Lng: ${map2d.getCenter().lng.toFixed(6)}° | Layer: ${activeRasterType.toUpperCase()}`;
     };
 
     // 3. Layer Opacity Slider
@@ -716,7 +737,7 @@
       }
     };
 
-    // 6. Sidebar Collapse
+    // 6. Sidebar Collapse Toggle
     window.toggleSidebar = function() {
       const sidebar = document.getElementById('left-sidebar');
       const icon = document.getElementById('collapse-icon');
@@ -730,7 +751,6 @@
       }
     };
 
-    // Handle Window Resize
     window.addEventListener('resize', () => {
       if (currentMode === '2d' && map2d) {
         map2d.invalidateSize();
