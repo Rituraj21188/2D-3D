@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TileMap version="1.0.0" tilemapservice="http://tms.osgeo.org/1.0.0">
+  <Title>Orthomosaic</Title>
+  <Abstract></Abstract>
+  <SRS>EPSG:3857</SRS>
+  <BoundingBox minx="10136821.754729" miny="2901638.0938294" maxx="10137093.200881" maxy="2901902.3550069"/>
+  <Origin x="10136821.754729" y="2901495.1487093"/>
+  <TileFormat width="2048" height="2048" mime-type="image/png" extension="png"/>
+  <TileSets profile="local">
+    <TileSet href="0" units-per-pixel="0.19883120000031" order="0"/>
+    <TileSet href="1" units-per-pixel="0.099415600000157" order="1"/>
+    <TileSet href="2" units-per-pixel="0.049707800000078" order="2"/>
+    <TileSet href="3" units-per-pixel="0.024853900000039" order="3"/>
+  </TileSets>
+</TileMap>
