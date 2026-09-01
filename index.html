@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mine Site GeoViewer - Rituraj Gogoi</title>
-  
+
   <!-- Font & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
 
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
+
   <style>
     * {
       margin: 0;
@@ -405,7 +405,7 @@
         </div>
         <span>2D Layers</span>
       </div>
-      
+
       <div id="card-3d" class="mode-card" onclick="switchMode('3d')">
         <div class="card-icon-glow">
           <i class="fa-solid fa-cubes-stacked"></i>
@@ -424,7 +424,7 @@
 
     <div class="sidebar-content">
       <span class="section-heading">2D Raster Tiles</span>
-      
+
       <!-- Orthomosaic Layer Card -->
       <div class="tool-card layer-option active" id="layer-card-ortho" onclick="selectRasterLayer('ortho')">
         <div class="tool-preview ortho-bg"></div>
@@ -477,7 +477,7 @@
   <!-- Bottom Status Bar -->
   <footer class="bottom-bar">
     <div class="data-source">© 2026 RITURAJ GOGOI. All rights reserved. | Ortho · DSM · DTM · Point Cloud</div>
-    <div class="coordinates" id="coord-display">Lat: 35.530501° | Lng: 64.643555° | Layer: Orthomosaic</div>
+    <div class="coordinates" id="coord-display">Lat: 25.211704° | Lng: 91.061838° | Layer: Orthomosaic</div>
   </footer>
 
   <!-- Scripts -->
@@ -503,19 +503,18 @@
     const MIN_LNG = 91.06061914668449;
     const MAX_LNG = 91.06305746574276;
 
-    // Center point
+    // Center coordinates
     const SITE_CENTER = [
-      (MIN_LAT + MAX_LAT) / 2, // ~25.211704
-      (MIN_LNG + MAX_LNG) / 2  // ~91.061838
+      (MIN_LAT + MAX_LAT) / 2, // 25.211704
+      (MIN_LNG + MAX_LNG) / 2  // 91.061838
     ];
 
-    // Bounding Box to lock the screen
+    // Bounding Box to strictly fit and lock the map
     const SITE_BOUNDS = L.latLngBounds(
       [MIN_LAT, MIN_LNG],
       [MAX_LAT, MAX_LNG]
     );
 
-    // Buffer bounds to allow slight panning around the site
     const PAN_BOUNDS = SITE_BOUNDS.pad(0.5);
 
     // 1. Initialize 2D Leaflet Map
@@ -531,7 +530,7 @@
         maxBoundsViscosity: 1.0
       });
 
-      // High-resolution Satellite background
+      // Satellite basemap background
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 22
       }).addTo(map2d);
@@ -555,10 +554,10 @@
       currentTileLayer = tileLayers.ortho;
       currentTileLayer.addTo(map2d);
 
-      // Zoom and fit precisely to the Orthomosaic boundary
+      // Zoom and fit precisely to the boundary
       map2d.fitBounds(SITE_BOUNDS);
 
-      // Coordinate & Layer Telemetry
+      // Coordinate telemetry
       map2d.on('mousemove', (e) => {
         document.getElementById('coord-display').innerText = 
           `Lat: ${e.latlng.lat.toFixed(6)}° | Lng: ${e.latlng.lng.toFixed(6)}° | Zoom: ${map2d.getZoom()} | Layer: ${activeRasterType.toUpperCase()}`;
@@ -741,7 +740,7 @@
     window.toggleSidebar = function() {
       const sidebar = document.getElementById('left-sidebar');
       const icon = document.getElementById('collapse-icon');
-      
+
       if (sidebar.style.width === '44px') {
         sidebar.style.width = '230px';
         icon.className = 'fa-solid fa-angles-left';
