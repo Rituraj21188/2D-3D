@@ -477,7 +477,7 @@
   <!-- Bottom Status Bar -->
   <footer class="bottom-bar">
     <div class="data-source">© 2026 RITURAJ GOGOI. All rights reserved. | Ortho · DSM · DTM · Point Cloud</div>
-    <div class="coordinates" id="coord-display">Lat: -- | Lng: -- | Layer: Orthomosaic</div>
+    <div class="coordinates" id="coord-display">Lat: 35.530501° | Lng: 64.643555° | Layer: Orthomosaic</div>
   </footer>
 
   <!-- Scripts -->
@@ -497,28 +497,48 @@
     let animationFrameId = null;
     let is3dInitialized = false;
 
-    // 1. Initialize 2D Leaflet View
+    // Center coordinates matching your site data
+    const SITE_CENTER = [35.530501, 64.643555];
+    const SITE_BOUNDS = L.latLngBounds(
+      [SITE_CENTER[0] - 0.02, SITE_CENTER[1] - 0.02],
+      [SITE_CENTER[0] + 0.02, SITE_CENTER[1] + 0.02]
+    );
+
+    // 1. Initialize 2D Leaflet View with Locked Bounds
     function init2DMap() {
-      // Default initial view
       map2d = L.map('view-2d', {
         zoomControl: false,
-        attributionControl: false
-      }).setView([23.5, 85.5], 16);
+        attributionControl: false,
+        center: SITE_CENTER,
+        zoom: 16,
+        minZoom: 14,
+        maxZoom: 22,
+        maxBounds: SITE_BOUNDS,
+        maxBoundsViscosity: 1.0
+      });
 
       // Satellite basemap
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 20
       }).addTo(map2d);
 
-      // Tile layers matching your generated folders in 'data/'
+      // Tile layer configurations (tms: true enables standard GDAL XYZ inversion)
+      const layerOpts = {
+        maxNativeZoom: 20,
+        maxZoom: 22,
+        tms: true,
+        bounds: SITE_BOUNDS
+      };
+
       tileLayers = {
-        ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', { maxNativeZoom: 20, maxZoom: 22, tms: false }),
-        dsm: L.tileLayer('./data/dsm/{z}/{x}/{y}.png', { maxNativeZoom: 20, maxZoom: 22, tms: false }),
-        dtm: L.tileLayer('./data/dtm/{z}/{x}/{y}.png', { maxNativeZoom: 20, maxZoom: 22, tms: false })
+        ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', layerOpts),
+        dsm: L.tileLayer('./data/dsm/{z}/{x}/{y}.png', layerOpts),
+        dtm: L.tileLayer('./data/dtm/{z}/{x}/{y}.png', layerOpts)
       };
 
       currentTileLayer = tileLayers.ortho;
       currentTileLayer.addTo(map2d);
+      map2d.fitBounds(SITE_BOUNDS);
 
       // Update coordinate telemetry
       map2d.on('mousemove', (e) => {
@@ -671,7 +691,10 @@
         activeModeLabel.innerText = `Active Mode: 2D ${activeRasterType.toUpperCase()}`;
 
         pause3DRenderer();
-        setTimeout(() => map2d.invalidateSize(), 150);
+        setTimeout(() => {
+          map2d.invalidateSize();
+          map2d.fitBounds(SITE_BOUNDS);
+        }, 150);
       } else {
         view3D.classList.remove('inactive');
         view3D.classList.add('active');
