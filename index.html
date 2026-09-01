@@ -14,7 +14,374 @@
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b0f19;
+      color: #f8fafc;
+    }
+
+    #viewport-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    .viewport {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .viewport.active {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    .viewport.inactive {
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Glass Panels */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Top Header */
+    .main-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 52px;
+      background: linear-gradient(180deg, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0) 100%);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+    }
+
+    .brand h2 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* Mode Switcher */
+    .mode-selector-panel {
+      position: absolute;
+      top: 60px;
+      left: 24px;
+      z-index: 100;
+      padding: 12px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .panel-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .mode-cards-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    .mode-card {
+      width: 110px;
+      height: 76px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .mode-card span {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .mode-card .card-icon-glow {
+      font-size: 20px;
+      color: #94a3b8;
+    }
+
+    .mode-card:hover {
+      background: rgba(51, 65, 85, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .mode-card.active {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(147, 51, 234, 0.35) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    }
+
+    .mode-card.active span {
+      color: #ffffff;
+    }
+
+    .mode-card.active .card-icon-glow {
+      color: #38bdf8;
+      transform: scale(1.1);
+    }
+
+    /* Left Sidebar */
+    .left-sidebar {
+      position: absolute;
+      top: 175px;
+      left: 24px;
+      bottom: 40px;
+      width: 230px;
+      border-radius: 16px;
+      z-index: 100;
+      display: flex;
+      overflow: hidden;
+      transition: width 0.3s ease;
+    }
+
+    .sidebar-tab-strip {
+      width: 44px;
+      background: rgba(11, 15, 25, 0.7);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      gap: 12px;
+    }
+
+    .strip-btn, .strip-toggle {
+      background: none;
+      border: none;
+      color: #64748b;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .strip-btn.active, .strip-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+    }
+
+    .strip-toggle {
+      margin-top: auto;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .section-heading {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+
+    .tool-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border 0.2s ease, transform 0.2s ease;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .tool-card.active {
+      border: 1px solid #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+
+    .tool-preview {
+      height: 44px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .ortho-bg {
+      background: linear-gradient(135deg, #1e3a8a, #047857);
+    }
+
+    .dsm-bg {
+      background: linear-gradient(135deg, #ef4444, #eab308, #10b981);
+    }
+
+    .dtm-bg {
+      background: linear-gradient(135deg, #78350f, #d97706, #fde68a);
+    }
+
+    .tool-info {
+      padding: 6px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.85);
+    }
+
+    .tool-info span {
+      font-size: 11px;
+      font-weight: 500;
+      color: #cbd5e1;
+    }
+
+    .active-indicator {
+      font-size: 12px;
+      color: #334155;
+    }
+
+    .tool-card.active .active-indicator {
+      color: #38bdf8;
+    }
+
+    .slider-box {
+      margin-top: 6px;
+      background: rgba(30, 41, 59, 0.3);
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .slider-box input[type="range"] {
+      width: 100%;
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 28px;
+      background: rgba(11, 15, 25, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 11px;
+      color: #64748b;
+      z-index: 100;
+    }
+
+    /* 3D Loading Overlay */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      gap: 16px;
+    }
+
+    .cyber-spinner {
+      width: 42px;
+      height: 42px;
+      border: 3px solid rgba(56, 189, 248, 0.15);
+      border-top: 3px solid #38bdf8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
 
@@ -110,7 +477,7 @@
   <!-- Bottom Status Bar -->
   <footer class="bottom-bar">
     <div class="data-source">© 2026 RITURAJ GOGOI. All rights reserved. | Ortho · DSM · DTM · Point Cloud</div>
-    <div class="coordinates" id="coord-display">Lat: 23.500000° | Lng: 85.500000° | Layer: Orthomosaic</div>
+    <div class="coordinates" id="coord-display">Lat: -- | Lng: -- | Layer: Orthomosaic</div>
   </footer>
 
   <!-- Scripts -->
@@ -118,6 +485,243 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
-  <script src="app.js"></script>
+
+  <script>
+    let currentMode = '2d';
+    let activeRasterType = 'ortho';
+    let map2d = null;
+    let tileLayers = {};
+    let currentTileLayer = null;
+
+    let renderer3d = null, scene3d = null, camera3d = null, controls3d = null;
+    let animationFrameId = null;
+    let is3dInitialized = false;
+
+    // 1. Initialize 2D Leaflet View
+    function init2DMap() {
+      // Default initial view
+      map2d = L.map('view-2d', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([23.5, 85.5], 16);
+
+      // Satellite basemap
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 20
+      }).addTo(map2d);
+
+      // Tile layers matching your generated folders in 'data/'
+      tileLayers = {
+        ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', { maxNativeZoom: 20, maxZoom: 22, tms: false }),
+        dsm: L.tileLayer('./data/dsm/{z}/{x}/{y}.png', { maxNativeZoom: 20, maxZoom: 22, tms: false }),
+        dtm: L.tileLayer('./data/dtm/{z}/{x}/{y}.png', { maxNativeZoom: 20, maxZoom: 22, tms: false })
+      };
+
+      currentTileLayer = tileLayers.ortho;
+      currentTileLayer.addTo(map2d);
+
+      // Update coordinate telemetry
+      map2d.on('mousemove', (e) => {
+        document.getElementById('coord-display').innerText = 
+          `Lat: ${e.latlng.lat.toFixed(6)}° | Lng: ${e.latlng.lng.toFixed(6)}° | Layer: ${activeRasterType.toUpperCase()}`;
+      });
+    }
+
+    // 2. Switch Raster Tiles (Ortho / DSM / DTM)
+    window.selectRasterLayer = function(type) {
+      if (activeRasterType === type) return;
+
+      if (currentTileLayer) {
+        map2d.removeLayer(currentTileLayer);
+      }
+
+      currentTileLayer = tileLayers[type];
+      if (currentTileLayer) {
+        currentTileLayer.addTo(map2d);
+        const currentOpacity = parseFloat(document.getElementById('layer-opacity').value);
+        currentTileLayer.setOpacity(currentOpacity);
+      }
+
+      activeRasterType = type;
+
+      document.querySelectorAll('.layer-option').forEach(el => el.classList.remove('active'));
+      const activeCard = document.getElementById(`layer-card-${type}`);
+      if (activeCard) activeCard.classList.add('active');
+    };
+
+    // 3. Layer Opacity Slider
+    window.setLayerOpacity = function(val) {
+      document.getElementById('opacity-val').innerText = `${Math.round(val * 100)}%`;
+      if (currentTileLayer) {
+        currentTileLayer.setOpacity(val);
+      }
+    };
+
+    // 4. Initialize Three.js 3D PLY View
+    function init3DView() {
+      const container = document.getElementById('view-3d');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const loadingText = document.getElementById('loading-text');
+
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || window.innerHeight;
+
+      scene3d = new THREE.Scene();
+      scene3d.background = new THREE.Color(0x0b0f19);
+
+      camera3d = new THREE.PerspectiveCamera(60, width / height, 0.01, 100000);
+      camera3d.position.set(0, 80, 120);
+
+      renderer3d = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power' });
+      renderer3d.setSize(width, height);
+      renderer3d.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      container.appendChild(renderer3d.domElement);
+
+      controls3d = new THREE.OrbitControls(camera3d, renderer3d.domElement);
+      controls3d.enableDamping = true;
+      controls3d.dampingFactor = 0.05;
+
+      loadingOverlay.style.display = 'flex';
+
+      const loader = new THREE.PLYLoader();
+      loader.load(
+        './cloud.ply',
+        function (geometry) {
+          geometry.computeVertexNormals();
+          geometry.center();
+
+          const hasColors = geometry.hasAttribute('color');
+          const material = new THREE.PointsMaterial({
+            size: 0.15,
+            vertexColors: hasColors,
+            color: hasColors ? 0xffffff : 0x38bdf8
+          });
+
+          const pointCloud = new THREE.Points(geometry, material);
+          scene3d.add(pointCloud);
+
+          geometry.computeBoundingSphere();
+          const radius = geometry.boundingSphere.radius;
+          camera3d.position.set(radius * 1.5, radius * 1.2, radius * 1.5);
+          controls3d.target.set(0, 0, 0);
+          controls3d.update();
+
+          loadingOverlay.style.display = 'none';
+        },
+        function (xhr) {
+          if (xhr.lengthComputable) {
+            const percent = Math.round((xhr.loaded / xhr.total) * 100);
+            loadingText.innerText = `Streaming cloud.ply (${percent}%)...`;
+          }
+        },
+        function (error) {
+          console.error('Error loading cloud.ply:', error);
+          loadingText.innerText = 'Failed to load cloud.ply. Verify file is in root.';
+        }
+      );
+
+      is3dInitialized = true;
+    }
+
+    function animate3D() {
+      if (currentMode !== '3d') return;
+      animationFrameId = requestAnimationFrame(animate3D);
+
+      if (controls3d) controls3d.update();
+      if (renderer3d && scene3d && camera3d) {
+        renderer3d.render(scene3d, camera3d);
+      }
+    }
+
+    function pause3DRenderer() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    function resume3DRenderer() {
+      if (!is3dInitialized) {
+        init3DView();
+      }
+      if (!animationFrameId) {
+        animate3D();
+      }
+    }
+
+    // 5. Mode Switcher (2D vs 3D)
+    window.switchMode = function (mode) {
+      if (mode === currentMode) return;
+      currentMode = mode;
+
+      const view2D = document.getElementById('view-2d');
+      const view3D = document.getElementById('view-3d');
+      const card2D = document.getElementById('card-2d');
+      const card3D = document.getElementById('card-3d');
+      const activeModeLabel = document.getElementById('active-mode-label');
+
+      if (mode === '2d') {
+        view2D.classList.remove('inactive');
+        view2D.classList.add('active');
+        view3D.classList.remove('active');
+        view3D.classList.add('inactive');
+
+        card2D.classList.add('active');
+        card3D.classList.remove('active');
+        activeModeLabel.innerText = `Active Mode: 2D ${activeRasterType.toUpperCase()}`;
+
+        pause3DRenderer();
+        setTimeout(() => map2d.invalidateSize(), 150);
+      } else {
+        view3D.classList.remove('inactive');
+        view3D.classList.add('active');
+        view2D.classList.remove('active');
+        view2D.classList.add('inactive');
+
+        card3D.classList.add('active');
+        card2D.classList.remove('active');
+        activeModeLabel.innerText = 'Active Mode: 3D Point Cloud';
+
+        resume3DRenderer();
+        if (renderer3d && camera3d) {
+          const w = view3D.clientWidth;
+          const h = view3D.clientHeight;
+          camera3d.aspect = w / h;
+          camera3d.updateProjectionMatrix();
+          renderer3d.setSize(w, h);
+        }
+      }
+    };
+
+    // 6. Sidebar Collapse
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById('left-sidebar');
+      const icon = document.getElementById('collapse-icon');
+      
+      if (sidebar.style.width === '44px') {
+        sidebar.style.width = '230px';
+        icon.className = 'fa-solid fa-angles-left';
+      } else {
+        sidebar.style.width = '44px';
+        icon.className = 'fa-solid fa-angles-right';
+      }
+    };
+
+    // Handle Window Resize
+    window.addEventListener('resize', () => {
+      if (currentMode === '2d' && map2d) {
+        map2d.invalidateSize();
+      } else if (currentMode === '3d' && renderer3d && camera3d) {
+        const view3D = document.getElementById('view-3d');
+        camera3d.aspect = view3D.clientWidth / view3D.clientHeight;
+        camera3d.updateProjectionMatrix();
+        renderer3d.setSize(view3D.clientWidth, view3D.clientHeight);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      init2DMap();
+    });
+  </script>
 </body>
 </html>
