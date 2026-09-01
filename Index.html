@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mine Site GeoViewer - Rituraj Gogoi</title>
+  
+  <!-- Font & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Top Header Banner -->
+  <header class="main-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+      <h2>Mine Site GeoViewer</h2>
+    </div>
+  </header>
+
+  <!-- Floating Mode Selector -->
+  <div class="mode-selector-panel glass-card">
+    <span class="panel-label" id="active-mode-label">Active Mode: 2D Orthomosaic</span>
+    <div class="mode-cards-container">
+      <div id="card-2d" class="mode-card active" onclick="switchMode('2d')">
+        <div class="card-icon-glow">
+          <i class="fa-solid fa-globe"></i>
+        </div>
+        <span>2D Layers</span>
+      </div>
+      
+      <div id="card-3d" class="mode-card" onclick="switchMode('3d')">
+        <div class="card-icon-glow">
+          <i class="fa-solid fa-cubes-stacked"></i>
+        </div>
+        <span>3D Point Cloud</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Left Layer & Tool Drawer -->
+  <aside class="left-sidebar glass-panel" id="left-sidebar">
+    <div class="sidebar-tab-strip">
+      <button class="strip-btn active" title="Layers"><i class="fa-solid fa-layer-group"></i></button>
+      <button class="strip-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-angles-left" id="collapse-icon"></i></button>
+    </div>
+
+    <div class="sidebar-content">
+      <span class="section-heading">2D Raster Tiles</span>
+      
+      <!-- Orthomosaic Layer Card -->
+      <div class="tool-card layer-option active" id="layer-card-ortho" onclick="selectRasterLayer('ortho')">
+        <div class="tool-preview ortho-bg"></div>
+        <div class="tool-info">
+          <span>Orthomosaic</span>
+          <i class="fa-solid fa-circle-check active-indicator"></i>
+        </div>
+      </div>
+
+      <!-- DSM Layer Card -->
+      <div class="tool-card layer-option" id="layer-card-dsm" onclick="selectRasterLayer('dsm')">
+        <div class="tool-preview dsm-bg"></div>
+        <div class="tool-info">
+          <span>DSM (Surface)</span>
+          <i class="fa-solid fa-circle-check active-indicator"></i>
+        </div>
+      </div>
+
+      <!-- DTM Layer Card -->
+      <div class="tool-card layer-option" id="layer-card-dtm" onclick="selectRasterLayer('dtm')">
+        <div class="tool-preview dtm-bg"></div>
+        <div class="tool-info">
+          <span>DTM (Terrain)</span>
+          <i class="fa-solid fa-circle-check active-indicator"></i>
+        </div>
+      </div>
+
+      <!-- Layer Opacity Slider -->
+      <div class="slider-box">
+        <div class="slider-header">
+          <span>Layer Opacity</span>
+          <span id="opacity-val">100%</span>
+        </div>
+        <input type="range" id="layer-opacity" min="0" max="1" step="0.05" value="1" oninput="setLayerOpacity(this.value)">
+      </div>
+    </div>
+  </aside>
+
+  <!-- Viewports -->
+  <main id="viewport-wrapper">
+    <div id="view-2d" class="viewport active"></div>
+    <div id="view-3d" class="viewport inactive">
+      <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="cyber-spinner"></div>
+        <p id="loading-text">Streaming cloud.ply...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Status Bar -->
+  <footer class="bottom-bar">
+    <div class="data-source">© 2026 RITURAJ GOGOI. All rights reserved. | Ortho · DSM · DTM · Point Cloud</div>
+    <div class="coordinates" id="coord-display">Lat: 23.500000° | Lng: 85.500000° | Layer: Orthomosaic</div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
