@@ -1,769 +1,2656 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mine Site GeoViewer - Rituraj Gogoi</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Font & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<title>Mine Site GeoViewer - 3D Point Cloud</title>
 
-  <!-- Leaflet Map CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      user-select: none;
-    }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
 
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #0b0f19;
-      color: #f8fafc;
-    }
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    #viewport-wrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 1;
-    }
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-    .viewport {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+<style>
 
-    .viewport.active {
-      opacity: 1;
-      pointer-events: auto;
-      z-index: 10;
-    }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+user-select:none;
+}
 
-    .viewport.inactive {
-      opacity: 0;
-      pointer-events: none;
-      z-index: 1;
-    }
+html,body{
+width:100%;
+height:100%;
+overflow:hidden;
+background:#0b0f19;
+color:#f8fafc;
+}
 
-    /* Glass Panels */
-    .glass-panel {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+#viewport-wrapper{
+position:absolute;
+inset:0;
+z-index:1;
+}
 
-    .glass-card {
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-    }
+.viewport{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+transition:opacity .3s ease;
+}
 
-    /* Top Header */
-    .main-header {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 52px;
-      background: linear-gradient(180deg, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0) 100%);
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      z-index: 100;
-      pointer-events: none;
-    }
+.viewport.active{
+opacity:1;
+pointer-events:auto;
+z-index:10;
+}
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+.viewport.inactive{
+opacity:0;
+pointer-events:none;
+z-index:1;
+}
 
-    .brand-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #06b6d4, #3b82f6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
-    }
+/* =========================================================
+   GLASS UI
+========================================================= */
 
-    .brand h2 {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
+.glass-panel{
+background:rgba(15,23,42,.85);
+backdrop-filter:blur(16px);
+-webkit-backdrop-filter:blur(16px);
+border:1px solid rgba(255,255,255,.1);
+}
 
-    /* Mode Switcher */
-    .mode-selector-panel {
-      position: absolute;
-      top: 60px;
-      left: 24px;
-      z-index: 100;
-      padding: 12px;
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+.glass-card{
+background:rgba(15,23,42,.86);
+backdrop-filter:blur(20px);
+-webkit-backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.12);
+box-shadow:0 20px 40px rgba(0,0,0,.5);
+}
 
-    .panel-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #94a3b8;
-      font-weight: 600;
-    }
+/* =========================================================
+   HEADER
+========================================================= */
 
-    .mode-cards-container {
-      display: flex;
-      gap: 10px;
-    }
+.main-header{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:52px;
+background:linear-gradient(
+180deg,
+rgba(11,15,25,.96),
+rgba(11,15,25,0)
+);
+display:flex;
+align-items:center;
+padding:0 24px;
+z-index:100;
+pointer-events:none;
+}
 
-    .mode-card {
-      width: 110px;
-      height: 76px;
-      background: rgba(30, 41, 59, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
+.brand{
+display:flex;
+align-items:center;
+gap:12px;
+}
 
-    .mode-card span {
-      font-size: 11px;
-      font-weight: 600;
-      color: #94a3b8;
-    }
+.brand-icon{
+width:32px;
+height:32px;
+border-radius:8px;
+background:linear-gradient(135deg,#06b6d4,#3b82f6);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:16px;
+box-shadow:0 0 15px rgba(6,182,212,.5);
+}
 
-    .mode-card .card-icon-glow {
-      font-size: 20px;
-      color: #94a3b8;
-    }
+.brand h2{
+font-size:16px;
+font-weight:700;
+letter-spacing:.5px;
+}
 
-    .mode-card:hover {
-      background: rgba(51, 65, 85, 0.5);
-      transform: translateY(-2px);
-    }
+/* =========================================================
+   MODE SELECTOR
+========================================================= */
 
-    .mode-card.active {
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(147, 51, 234, 0.35) 100%);
-      border: 1px solid rgba(56, 189, 248, 0.6);
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
-    }
+.mode-selector-panel{
+position:absolute;
+top:60px;
+left:24px;
+z-index:100;
+padding:12px;
+border-radius:16px;
+display:flex;
+flex-direction:column;
+gap:8px;
+}
 
-    .mode-card.active span {
-      color: #ffffff;
-    }
+.panel-label{
+font-size:11px;
+text-transform:uppercase;
+letter-spacing:.8px;
+color:#94a3b8;
+font-weight:600;
+}
 
-    .mode-card.active .card-icon-glow {
-      color: #38bdf8;
-      transform: scale(1.1);
-    }
+.mode-cards-container{
+display:flex;
+gap:10px;
+}
 
-    /* Left Sidebar */
-    .left-sidebar {
-      position: absolute;
-      top: 175px;
-      left: 24px;
-      bottom: 40px;
-      width: 230px;
-      border-radius: 16px;
-      z-index: 100;
-      display: flex;
-      overflow: hidden;
-      transition: width 0.3s ease;
-    }
+.mode-card{
+width:110px;
+height:76px;
+background:rgba(30,41,59,.5);
+border:1px solid rgba(255,255,255,.05);
+border-radius:12px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:6px;
+cursor:pointer;
+transition:.25s;
+}
 
-    .sidebar-tab-strip {
-      width: 44px;
-      background: rgba(11, 15, 25, 0.7);
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 0;
-      gap: 12px;
-    }
+.mode-card span{
+font-size:11px;
+font-weight:600;
+color:#94a3b8;
+}
 
-    .strip-btn, .strip-toggle {
-      background: none;
-      border: none;
-      color: #64748b;
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
+.mode-card .card-icon-glow{
+font-size:20px;
+color:#94a3b8;
+}
 
-    .strip-btn.active, .strip-btn:hover {
-      background: rgba(56, 189, 248, 0.15);
-      color: #38bdf8;
-    }
+.mode-card:hover{
+background:rgba(51,65,85,.5);
+transform:translateY(-2px);
+}
 
-    .strip-toggle {
-      margin-top: auto;
-    }
+.mode-card.active{
+background:linear-gradient(
+135deg,
+rgba(6,182,212,.35),
+rgba(147,51,234,.35)
+);
+border:1px solid rgba(56,189,248,.6);
+box-shadow:0 0 20px rgba(6,182,212,.3);
+}
 
-    .sidebar-content {
-      flex: 1;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      overflow-y: auto;
-    }
+.mode-card.active span{
+color:white;
+}
 
-    .section-heading {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: #64748b;
-      letter-spacing: 0.5px;
-    }
+.mode-card.active .card-icon-glow{
+color:#38bdf8;
+}
 
-    .tool-card {
-      background: rgba(30, 41, 59, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border 0.2s ease, transform 0.2s ease;
-    }
+/* =========================================================
+   LEFT SIDEBAR
+========================================================= */
 
-    .tool-card:hover {
-      transform: translateY(-2px);
-    }
+.left-sidebar{
+position:absolute;
+top:175px;
+left:24px;
+bottom:40px;
+width:230px;
+border-radius:16px;
+z-index:100;
+display:flex;
+overflow:hidden;
+transition:width .3s ease;
+}
 
-    .tool-card.active {
-      border: 1px solid #38bdf8;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-    }
+.sidebar-tab-strip{
+width:44px;
+min-width:44px;
+background:rgba(11,15,25,.7);
+border-right:1px solid rgba(255,255,255,.08);
+display:flex;
+flex-direction:column;
+align-items:center;
+padding:10px 0;
+gap:12px;
+}
 
-    .tool-preview {
-      height: 44px;
-      background-size: cover;
-      background-position: center;
-    }
+.strip-btn,
+.strip-toggle{
+background:none;
+border:none;
+color:#64748b;
+width:32px;
+height:32px;
+border-radius:8px;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+}
 
-    .ortho-bg {
-      background: linear-gradient(135deg, #1e3a8a, #047857);
-    }
+.strip-btn:hover,
+.strip-toggle:hover{
+background:rgba(56,189,248,.15);
+color:#38bdf8;
+}
 
-    .dsm-bg {
-      background: linear-gradient(135deg, #ef4444, #eab308, #10b981);
-    }
+.strip-toggle{
+margin-top:auto;
+}
 
-    .dtm-bg {
-      background: linear-gradient(135deg, #78350f, #d97706, #fde68a);
-    }
+.sidebar-content{
+flex:1;
+padding:12px;
+display:flex;
+flex-direction:column;
+gap:10px;
+overflow-y:auto;
+}
 
-    .tool-info {
-      padding: 6px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(15, 23, 42, 0.85);
-    }
+.section-heading{
+font-size:11px;
+font-weight:600;
+text-transform:uppercase;
+color:#64748b;
+letter-spacing:.5px;
+}
 
-    .tool-info span {
-      font-size: 11px;
-      font-weight: 500;
-      color: #cbd5e1;
-    }
+.tool-card{
+background:rgba(30,41,59,.4);
+border:1px solid rgba(255,255,255,.06);
+border-radius:10px;
+overflow:hidden;
+cursor:pointer;
+}
 
-    .active-indicator {
-      font-size: 12px;
-      color: #334155;
-    }
+.tool-card.active{
+border:1px solid #38bdf8;
+box-shadow:0 0 10px rgba(56,189,248,.3);
+}
 
-    .tool-card.active .active-indicator {
-      color: #38bdf8;
-    }
+.tool-preview{
+height:44px;
+background-size:cover;
+}
 
-    .slider-box {
-      margin-top: 6px;
-      background: rgba(30, 41, 59, 0.3);
-      padding: 10px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+.ortho-bg{
+background:linear-gradient(135deg,#1e3a8a,#047857);
+}
 
-    .slider-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: #94a3b8;
-    }
+.dsm-bg{
+background:linear-gradient(135deg,#ef4444,#eab308,#10b981);
+}
 
-    .slider-box input[type="range"] {
-      width: 100%;
-      accent-color: #38bdf8;
-      cursor: pointer;
-    }
+.dtm-bg{
+background:linear-gradient(135deg,#78350f,#d97706,#fde68a);
+}
 
-    /* Bottom Bar */
-    .bottom-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 28px;
-      background: rgba(11, 15, 25, 0.95);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      font-size: 11px;
-      color: #64748b;
-      z-index: 100;
-    }
+.tool-info{
+padding:6px 10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:rgba(15,23,42,.85);
+}
 
-    /* 3D Loading Overlay */
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(11, 15, 25, 0.85);
-      backdrop-filter: blur(8px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-      gap: 16px;
-    }
+.tool-info span{
+font-size:11px;
+font-weight:500;
+color:#cbd5e1;
+}
 
-    .cyber-spinner {
-      width: 42px;
-      height: 42px;
-      border: 3px solid rgba(56, 189, 248, 0.15);
-      border-top: 3px solid #38bdf8;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
+.active-indicator{
+color:#334155;
+}
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
+.tool-card.active .active-indicator{
+color:#38bdf8;
+}
+
+.slider-box{
+margin-top:6px;
+background:rgba(30,41,59,.3);
+padding:10px;
+border-radius:8px;
+display:flex;
+flex-direction:column;
+gap:6px;
+}
+
+.slider-header{
+display:flex;
+justify-content:space-between;
+font-size:11px;
+color:#94a3b8;
+}
+
+.slider-box input{
+width:100%;
+accent-color:#38bdf8;
+}
+
+/* =========================================================
+   3D CONTROLS
+========================================================= */
+
+#pc-controls{
+
+position:absolute;
+
+right:24px;
+top:70px;
+
+width:245px;
+
+padding:14px;
+
+border-radius:14px;
+
+background:rgba(15,23,42,.90);
+
+backdrop-filter:blur(18px);
+
+border:1px solid rgba(255,255,255,.12);
+
+box-shadow:0 15px 40px rgba(0,0,0,.5);
+
+z-index:250;
+
+color:#e2e8f0;
+
+font-size:12px;
+}
+
+.pc-title{
+font-size:11px;
+font-weight:700;
+letter-spacing:.8px;
+color:#38bdf8;
+text-transform:uppercase;
+margin-bottom:12px;
+}
+
+.pc-row{
+margin-bottom:12px;
+}
+
+.pc-row-header{
+display:flex;
+justify-content:space-between;
+margin-bottom:5px;
+color:#94a3b8;
+}
+
+.pc-row input[type=range]{
+width:100%;
+accent-color:#38bdf8;
+}
+
+.pc-buttons{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:6px;
+}
+
+.pc-buttons button{
+background:#1e293b;
+border:1px solid rgba(255,255,255,.1);
+color:#cbd5e1;
+border-radius:7px;
+padding:7px;
+font-size:11px;
+cursor:pointer;
+}
+
+.pc-buttons button:hover{
+background:#334155;
+border-color:#38bdf8;
+color:white;
+}
+
+.pc-stats{
+margin-top:12px;
+padding-top:10px;
+border-top:1px solid rgba(255,255,255,.08);
+font-size:10px;
+line-height:1.7;
+color:#94a3b8;
+}
+
+/* =========================================================
+   AXIS INFORMATION
+========================================================= */
+
+#axis-info{
+
+position:absolute;
+
+right:285px;
+bottom:48px;
+
+z-index:200;
+
+background:rgba(15,23,42,.8);
+
+backdrop-filter:blur(10px);
+
+border:1px solid rgba(255,255,255,.1);
+
+border-radius:10px;
+
+padding:9px 12px;
+
+font-size:10px;
+
+color:#94a3b8;
+
+line-height:1.6;
+}
+
+#axis-info b{
+color:#e2e8f0;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading-overlay{
+position:absolute;
+inset:0;
+background:rgba(11,15,25,.88);
+backdrop-filter:blur(8px);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:300;
+gap:16px;
+}
+
+.cyber-spinner{
+width:42px;
+height:42px;
+border:3px solid rgba(56,189,248,.15);
+border-top:3px solid #38bdf8;
+border-radius:50%;
+animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+to{transform:rotate(360deg);}
+}
+
+/* =========================================================
+   BOTTOM BAR
+========================================================= */
+
+.bottom-bar{
+position:absolute;
+bottom:0;
+left:0;
+width:100%;
+height:28px;
+background:rgba(11,15,25,.95);
+border-top:1px solid rgba(255,255,255,.05);
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 20px;
+font-size:11px;
+color:#64748b;
+z-index:100;
+}
+
+/* =========================================================
+   3D CANVAS
+========================================================= */
+
+#view-3d canvas{
+display:block;
+width:100%;
+height:100%;
+cursor:grab;
+}
+
+#view-3d canvas:active{
+cursor:grabbing;
+}
+
+</style>
 </head>
+
 <body>
 
-  <!-- Top Header Banner -->
-  <header class="main-header">
-    <div class="brand">
-      <div class="brand-icon">
-        <i class="fa-solid fa-cube"></i>
-      </div>
-      <h2>Mine Site GeoViewer</h2>
-    </div>
-  </header>
+<!-- =========================================================
+     HEADER
+========================================================= -->
 
-  <!-- Floating Mode Selector -->
-  <div class="mode-selector-panel glass-card">
-    <span class="panel-label" id="active-mode-label">Active Mode: 2D Orthomosaic</span>
-    <div class="mode-cards-container">
-      <div id="card-2d" class="mode-card active" onclick="switchMode('2d')">
-        <div class="card-icon-glow">
-          <i class="fa-solid fa-globe"></i>
-        </div>
-        <span>2D Layers</span>
-      </div>
+<header class="main-header">
 
-      <div id="card-3d" class="mode-card" onclick="switchMode('3d')">
-        <div class="card-icon-glow">
-          <i class="fa-solid fa-cubes-stacked"></i>
-        </div>
-        <span>3D Point Cloud</span>
-      </div>
-    </div>
-  </div>
+<div class="brand">
 
-  <!-- Left Layer & Tool Drawer -->
-  <aside class="left-sidebar glass-panel" id="left-sidebar">
-    <div class="sidebar-tab-strip">
-      <button class="strip-btn active" title="Layers"><i class="fa-solid fa-layer-group"></i></button>
-      <button class="strip-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-angles-left" id="collapse-icon"></i></button>
-    </div>
+<div class="brand-icon">
+<i class="fa-solid fa-cube"></i>
+</div>
 
-    <div class="sidebar-content">
-      <span class="section-heading">2D Raster Tiles</span>
+<h2>Mine Site GeoViewer</h2>
 
-      <!-- Orthomosaic Layer Card -->
-      <div class="tool-card layer-option active" id="layer-card-ortho" onclick="selectRasterLayer('ortho')">
-        <div class="tool-preview ortho-bg"></div>
-        <div class="tool-info">
-          <span>Orthomosaic</span>
-          <i class="fa-solid fa-circle-check active-indicator"></i>
-        </div>
-      </div>
+</div>
 
-      <!-- DSM Layer Card -->
-      <div class="tool-card layer-option" id="layer-card-dsm" onclick="selectRasterLayer('dsm')">
-        <div class="tool-preview dsm-bg"></div>
-        <div class="tool-info">
-          <span>DSM (Surface)</span>
-          <i class="fa-solid fa-circle-check active-indicator"></i>
-        </div>
-      </div>
+</header>
 
-      <!-- DTM Layer Card -->
-      <div class="tool-card layer-option" id="layer-card-dtm" onclick="selectRasterLayer('dtm')">
-        <div class="tool-preview dtm-bg"></div>
-        <div class="tool-info">
-          <span>DTM (Terrain)</span>
-          <i class="fa-solid fa-circle-check active-indicator"></i>
-        </div>
-      </div>
 
-      <!-- Layer Opacity Slider -->
-      <div class="slider-box">
-        <div class="slider-header">
-          <span>Layer Opacity</span>
-          <span id="opacity-val">100%</span>
-        </div>
-        <input type="range" id="layer-opacity" min="0" max="1" step="0.05" value="1" oninput="setLayerOpacity(this.value)">
-      </div>
-    </div>
-  </aside>
+<!-- =========================================================
+     MODE SWITCHER
+========================================================= -->
 
-  <!-- Viewports -->
-  <main id="viewport-wrapper">
-    <div id="view-2d" class="viewport active"></div>
-    <div id="view-3d" class="viewport inactive">
-      <div id="loading-overlay" class="loading-overlay" style="display: none;">
-        <div class="cyber-spinner"></div>
-        <p id="loading-text">Streaming cloud.ply...</p>
-      </div>
-    </div>
-  </main>
+<div class="mode-selector-panel glass-card">
 
-  <!-- Bottom Status Bar -->
-  <footer class="bottom-bar">
-    <div class="data-source">© 2026 RITURAJ GOGOI. All rights reserved. | Ortho · DSM · DTM · Point Cloud</div>
-    <div class="coordinates" id="coord-display">Lat: 25.211704° | Lng: 91.061838° | Layer: Orthomosaic</div>
-  </footer>
+<span class="panel-label" id="active-mode-label">
+Active Mode: 2D Orthomosaic
+</span>
 
-  <!-- Scripts -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+<div class="mode-cards-container">
 
-  <script>
-    let currentMode = '2d';
-    let activeRasterType = 'ortho';
-    let map2d = null;
-    let tileLayers = {};
-    let currentTileLayer = null;
+<div id="card-2d"
+class="mode-card active"
+onclick="switchMode('2d')">
 
-    let renderer3d = null, scene3d = null, camera3d = null, controls3d = null;
-    let animationFrameId = null;
-    let is3dInitialized = false;
+<div class="card-icon-glow">
+<i class="fa-solid fa-globe"></i>
+</div>
 
-    // --- EXACT BOUNDS FROM YOUR TILEMAPRESOURCE.XML ---
-    const MIN_LAT = 25.21063054697481;
-    const MAX_LAT = 25.21277826092301;
-    const MIN_LNG = 91.06061914668449;
-    const MAX_LNG = 91.06305746574276;
+<span>2D Layers</span>
 
-    // Center coordinates
-    const SITE_CENTER = [
-      (MIN_LAT + MAX_LAT) / 2, // 25.211704
-      (MIN_LNG + MAX_LNG) / 2  // 91.061838
-    ];
+</div>
 
-    // Bounding Box to strictly fit and lock the map
-    const SITE_BOUNDS = L.latLngBounds(
-      [MIN_LAT, MIN_LNG],
-      [MAX_LAT, MAX_LNG]
-    );
 
-    const PAN_BOUNDS = SITE_BOUNDS.pad(0.5);
+<div id="card-3d"
+class="mode-card"
+onclick="switchMode('3d')">
 
-    // 1. Initialize 2D Leaflet Map
-    function init2DMap() {
-      map2d = L.map('view-2d', {
-        zoomControl: false,
-        attributionControl: false,
-        center: SITE_CENTER,
-        zoom: 18,
-        minZoom: 10,
-        maxZoom: 22,
-        maxBounds: PAN_BOUNDS,
-        maxBoundsViscosity: 1.0
-      });
+<div class="card-icon-glow">
+<i class="fa-solid fa-cubes-stacked"></i>
+</div>
 
-      // Satellite basemap background
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 22
-      }).addTo(map2d);
+<span>3D Point Cloud</span>
 
-      // Tile Configuration from your TileSet profile (Zoom 10 - 20, TMS)
-      const tileConfig = {
-        minZoom: 10,
-        maxNativeZoom: 20,
-        maxZoom: 22,
-        tms: true,
-        bounds: SITE_BOUNDS
-      };
+</div>
 
-      tileLayers = {
-        ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', tileConfig),
-        dsm: L.tileLayer('./data/dsm/{z}/{x}/{y}.png', tileConfig),
-        dtm: L.tileLayer('./data/dtm/{z}/{x}/{y}.png', tileConfig)
-      };
+</div>
+</div>
 
-      // Add default Orthomosaic layer
-      currentTileLayer = tileLayers.ortho;
-      currentTileLayer.addTo(map2d);
 
-      // Zoom and fit precisely to the boundary
-      map2d.fitBounds(SITE_BOUNDS);
+<!-- =========================================================
+     LEFT SIDEBAR
+========================================================= -->
 
-      // Coordinate telemetry
-      map2d.on('mousemove', (e) => {
-        document.getElementById('coord-display').innerText = 
-          `Lat: ${e.latlng.lat.toFixed(6)}° | Lng: ${e.latlng.lng.toFixed(6)}° | Zoom: ${map2d.getZoom()} | Layer: ${activeRasterType.toUpperCase()}`;
-      });
-    }
+<aside class="left-sidebar glass-panel" id="left-sidebar">
 
-    // 2. Switch Raster Tiles (Ortho / DSM / DTM)
-    window.selectRasterLayer = function(type) {
-      if (activeRasterType === type) return;
+<div class="sidebar-tab-strip">
 
-      if (currentTileLayer) {
-        map2d.removeLayer(currentTileLayer);
-      }
+<button class="strip-btn active">
+<i class="fa-solid fa-layer-group"></i>
+</button>
 
-      currentTileLayer = tileLayers[type];
-      if (currentTileLayer) {
-        currentTileLayer.addTo(map2d);
-        const currentOpacity = parseFloat(document.getElementById('layer-opacity').value);
-        currentTileLayer.setOpacity(currentOpacity);
-      }
+<button class="strip-toggle"
+onclick="toggleSidebar()">
 
-      activeRasterType = type;
+<i class="fa-solid fa-angles-left"
+id="collapse-icon"></i>
 
-      document.querySelectorAll('.layer-option').forEach(el => el.classList.remove('active'));
-      const activeCard = document.getElementById(`layer-card-${type}`);
-      if (activeCard) activeCard.classList.add('active');
+</button>
 
-      document.getElementById('coord-display').innerText = 
-        `Lat: ${map2d.getCenter().lat.toFixed(6)}° | Lng: ${map2d.getCenter().lng.toFixed(6)}° | Layer: ${activeRasterType.toUpperCase()}`;
-    };
+</div>
 
-    // 3. Layer Opacity Slider
-    window.setLayerOpacity = function(val) {
-      document.getElementById('opacity-val').innerText = `${Math.round(val * 100)}%`;
-      if (currentTileLayer) {
-        currentTileLayer.setOpacity(val);
-      }
-    };
 
-    // 4. Initialize Three.js 3D PLY View
-    function init3DView() {
-      const container = document.getElementById('view-3d');
-      const loadingOverlay = document.getElementById('loading-overlay');
-      const loadingText = document.getElementById('loading-text');
+<div class="sidebar-content">
 
-      const width = container.clientWidth || window.innerWidth;
-      const height = container.clientHeight || window.innerHeight;
+<span class="section-heading">
+2D Raster Tiles
+</span>
 
-      scene3d = new THREE.Scene();
-      scene3d.background = new THREE.Color(0x0b0f19);
 
-      camera3d = new THREE.PerspectiveCamera(60, width / height, 0.01, 100000);
-      camera3d.position.set(0, 80, 120);
+<div class="tool-card layer-option active"
+id="layer-card-ortho"
+onclick="selectRasterLayer('ortho')">
 
-      renderer3d = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power' });
-      renderer3d.setSize(width, height);
-      renderer3d.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-      container.appendChild(renderer3d.domElement);
+<div class="tool-preview ortho-bg"></div>
 
-      controls3d = new THREE.OrbitControls(camera3d, renderer3d.domElement);
-      controls3d.enableDamping = true;
-      controls3d.dampingFactor = 0.05;
+<div class="tool-info">
 
-      loadingOverlay.style.display = 'flex';
+<span>Orthomosaic</span>
 
-      const loader = new THREE.PLYLoader();
-      loader.load(
-        './cloud.ply',
-        function (geometry) {
-          geometry.computeVertexNormals();
-          geometry.center();
+<i class="fa-solid fa-circle-check active-indicator"></i>
 
-          const hasColors = geometry.hasAttribute('color');
-          const material = new THREE.PointsMaterial({
-            size: 0.15,
-            vertexColors: hasColors,
-            color: hasColors ? 0xffffff : 0x38bdf8
-          });
+</div>
 
-          const pointCloud = new THREE.Points(geometry, material);
-          scene3d.add(pointCloud);
+</div>
 
-          geometry.computeBoundingSphere();
-          const radius = geometry.boundingSphere.radius;
-          camera3d.position.set(radius * 1.5, radius * 1.2, radius * 1.5);
-          controls3d.target.set(0, 0, 0);
-          controls3d.update();
 
-          loadingOverlay.style.display = 'none';
-        },
-        function (xhr) {
-          if (xhr.lengthComputable) {
-            const percent = Math.round((xhr.loaded / xhr.total) * 100);
-            loadingText.innerText = `Streaming cloud.ply (${percent}%)...`;
-          }
-        },
-        function (error) {
-          console.error('Error loading cloud.ply:', error);
-          loadingText.innerText = 'Failed to load cloud.ply. Verify file is in root.';
-        }
-      );
+<div class="tool-card layer-option"
+id="layer-card-dsm"
+onclick="selectRasterLayer('dsm')">
 
-      is3dInitialized = true;
-    }
+<div class="tool-preview dsm-bg"></div>
 
-    function animate3D() {
-      if (currentMode !== '3d') return;
-      animationFrameId = requestAnimationFrame(animate3D);
+<div class="tool-info">
 
-      if (controls3d) controls3d.update();
-      if (renderer3d && scene3d && camera3d) {
-        renderer3d.render(scene3d, camera3d);
-      }
-    }
+<span>DSM (Surface)</span>
 
-    function pause3DRenderer() {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-    }
+<i class="fa-solid fa-circle-check active-indicator"></i>
 
-    function resume3DRenderer() {
-      if (!is3dInitialized) {
-        init3DView();
-      }
-      if (!animationFrameId) {
-        animate3D();
-      }
-    }
+</div>
 
-    // 5. Mode Switcher (2D vs 3D)
-    window.switchMode = function (mode) {
-      if (mode === currentMode) return;
-      currentMode = mode;
+</div>
 
-      const view2D = document.getElementById('view-2d');
-      const view3D = document.getElementById('view-3d');
-      const card2D = document.getElementById('card-2d');
-      const card3D = document.getElementById('card-3d');
-      const activeModeLabel = document.getElementById('active-mode-label');
 
-      if (mode === '2d') {
-        view2D.classList.remove('inactive');
-        view2D.classList.add('active');
-        view3D.classList.remove('active');
-        view3D.classList.add('inactive');
+<div class="tool-card layer-option"
+id="layer-card-dtm"
+onclick="selectRasterLayer('dtm')">
 
-        card2D.classList.add('active');
-        card3D.classList.remove('active');
-        activeModeLabel.innerText = `Active Mode: 2D ${activeRasterType.toUpperCase()}`;
+<div class="tool-preview dtm-bg"></div>
 
-        pause3DRenderer();
-        setTimeout(() => {
-          map2d.invalidateSize();
-          map2d.fitBounds(SITE_BOUNDS);
-        }, 150);
-      } else {
-        view3D.classList.remove('inactive');
-        view3D.classList.add('active');
-        view2D.classList.remove('active');
-        view2D.classList.add('inactive');
+<div class="tool-info">
 
-        card3D.classList.add('active');
-        card2D.classList.remove('active');
-        activeModeLabel.innerText = 'Active Mode: 3D Point Cloud';
+<span>DTM (Terrain)</span>
 
-        resume3DRenderer();
-        if (renderer3d && camera3d) {
-          const w = view3D.clientWidth;
-          const h = view3D.clientHeight;
-          camera3d.aspect = w / h;
-          camera3d.updateProjectionMatrix();
-          renderer3d.setSize(w, h);
-        }
-      }
-    };
+<i class="fa-solid fa-circle-check active-indicator"></i>
 
-    // 6. Sidebar Collapse Toggle
-    window.toggleSidebar = function() {
-      const sidebar = document.getElementById('left-sidebar');
-      const icon = document.getElementById('collapse-icon');
+</div>
 
-      if (sidebar.style.width === '44px') {
-        sidebar.style.width = '230px';
-        icon.className = 'fa-solid fa-angles-left';
-      } else {
-        sidebar.style.width = '44px';
-        icon.className = 'fa-solid fa-angles-right';
-      }
-    };
+</div>
 
-    window.addEventListener('resize', () => {
-      if (currentMode === '2d' && map2d) {
-        map2d.invalidateSize();
-      } else if (currentMode === '3d' && renderer3d && camera3d) {
-        const view3D = document.getElementById('view-3d');
-        camera3d.aspect = view3D.clientWidth / view3D.clientHeight;
-        camera3d.updateProjectionMatrix();
-        renderer3d.setSize(view3D.clientWidth, view3D.clientHeight);
-      }
-    });
 
-    window.addEventListener('DOMContentLoaded', () => {
-      init2DMap();
-    });
-  </script>
+<div class="slider-box">
+
+<div class="slider-header">
+
+<span>Layer Opacity</span>
+
+<span id="opacity-val">100%</span>
+
+</div>
+
+<input
+type="range"
+id="layer-opacity"
+min="0"
+max="1"
+step=".05"
+value="1"
+oninput="setLayerOpacity(this.value)"
+>
+
+</div>
+
+</div>
+
+</aside>
+
+
+<!-- =========================================================
+     VIEWPORTS
+========================================================= -->
+
+<main id="viewport-wrapper">
+
+<div id="view-2d"
+class="viewport active">
+</div>
+
+
+<div id="view-3d"
+class="viewport inactive">
+
+<div id="loading-overlay"
+class="loading-overlay"
+style="display:none">
+
+<div class="cyber-spinner"></div>
+
+<p id="loading-text">
+Loading point cloud...
+</p>
+
+</div>
+
+</div>
+
+</main>
+
+
+<!-- =========================================================
+     AXIS INFORMATION
+========================================================= -->
+
+<div id="axis-info">
+
+<b>X</b> East / West &nbsp;|&nbsp;
+
+<b>Y</b> North / South &nbsp;|&nbsp;
+
+<b>Z</b> Elevation
+
+</div>
+
+
+<!-- =========================================================
+     STATUS BAR
+========================================================= -->
+
+<footer class="bottom-bar">
+
+<div>
+© 2026 RITURAJ GOGOI |
+Ortho · DSM · DTM · Point Cloud
+</div>
+
+<div id="coord-display">
+
+Lat: 25.211704° |
+Lng: 91.061838° |
+Layer: Orthomosaic
+
+</div>
+
+</footer>
+
+
+<!-- =========================================================
+     LIBRARIES
+========================================================= -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+
+
+<script>
+
+/* =========================================================
+   GLOBAL VARIABLES
+========================================================= */
+
+let currentMode = '2d';
+
+let activeRasterType = 'ortho';
+
+let map2d = null;
+
+let tileLayers = {};
+
+let currentTileLayer = null;
+
+
+/* 3D */
+
+let renderer3d = null;
+
+let scene3d = null;
+
+let camera3d = null;
+
+let controls3d = null;
+
+let pointCloudGroup = null;
+
+let pointCloud3d = null;
+
+let pointsMaterial3d = null;
+
+let grid3d = null;
+
+let axes3d = null;
+
+let animationFrameId = null;
+
+let is3dInitialized = false;
+
+
+/* Cloud */
+
+let cloudCenter = new THREE.Vector3();
+
+let cloudSize = new THREE.Vector3();
+
+let cloudRadius = 1;
+
+
+/* Default camera */
+
+let defaultCameraPosition =
+new THREE.Vector3();
+
+let defaultTarget =
+new THREE.Vector3();
+
+
+/* =========================================================
+   SITE BOUNDS
+========================================================= */
+
+const MIN_LAT = 25.21063054697481;
+
+const MAX_LAT = 25.21277826092301;
+
+const MIN_LNG = 91.06061914668449;
+
+const MAX_LNG = 91.06305746574276;
+
+
+const SITE_CENTER = [
+
+(MIN_LAT + MAX_LAT) / 2,
+
+(MIN_LNG + MAX_LNG) / 2
+
+];
+
+
+const SITE_BOUNDS = L.latLngBounds(
+
+[MIN_LAT, MIN_LNG],
+
+[MAX_LAT, MAX_LNG]
+
+);
+
+
+const PAN_BOUNDS =
+SITE_BOUNDS.pad(.5);
+
+
+/* =========================================================
+   2D MAP
+========================================================= */
+
+function init2DMap(){
+
+map2d = L.map('view-2d',{
+
+zoomControl:false,
+
+attributionControl:false,
+
+center:SITE_CENTER,
+
+zoom:18,
+
+minZoom:10,
+
+maxZoom:22,
+
+maxBounds:PAN_BOUNDS,
+
+maxBoundsViscosity:1
+
+});
+
+
+L.tileLayer(
+
+'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+
+maxZoom:22
+
+}
+
+).addTo(map2d);
+
+
+const tileConfig = {
+
+minZoom:10,
+
+maxNativeZoom:20,
+
+maxZoom:22,
+
+tms:true,
+
+bounds:SITE_BOUNDS
+
+};
+
+
+tileLayers = {
+
+ortho:
+L.tileLayer(
+'./data/ortho/{z}/{x}/{y}.png',
+tileConfig
+),
+
+dsm:
+L.tileLayer(
+'./data/dsm/{z}/{x}/{y}.png',
+tileConfig
+),
+
+dtm:
+L.tileLayer(
+'./data/dtm/{z}/{x}/{y}.png',
+tileConfig
+)
+
+};
+
+
+currentTileLayer =
+tileLayers.ortho;
+
+currentTileLayer.addTo(map2d);
+
+
+map2d.fitBounds(SITE_BOUNDS);
+
+
+map2d.on('mousemove',function(e){
+
+document.getElementById(
+'coord-display'
+).innerText =
+
+`Lat: ${e.latlng.lat.toFixed(6)}° | `+
+`Lng: ${e.latlng.lng.toFixed(6)}° | `+
+`Zoom: ${map2d.getZoom()} | `+
+`Layer: ${activeRasterType.toUpperCase()}`;
+
+});
+
+}
+
+
+/* =========================================================
+   RASTER LAYER
+========================================================= */
+
+window.selectRasterLayer=function(type){
+
+if(activeRasterType===type)return;
+
+if(currentTileLayer){
+
+map2d.removeLayer(
+currentTileLayer
+);
+
+}
+
+currentTileLayer =
+tileLayers[type];
+
+currentTileLayer.addTo(map2d);
+
+const opacity =
+parseFloat(
+document.getElementById(
+'layer-opacity'
+).value
+);
+
+currentTileLayer.setOpacity(opacity);
+
+activeRasterType=type;
+
+
+document
+.querySelectorAll('.layer-option')
+.forEach(el=>{
+el.classList.remove('active');
+});
+
+
+const card =
+document.getElementById(
+`layer-card-${type}`
+);
+
+if(card){
+
+card.classList.add('active');
+
+}
+
+};
+
+
+/* =========================================================
+   OPACITY
+========================================================= */
+
+window.setLayerOpacity=function(val){
+
+document.getElementById(
+'opacity-val'
+).innerText =
+Math.round(val*100)+'%';
+
+
+if(currentTileLayer){
+
+currentTileLayer.setOpacity(val);
+
+}
+
+};
+
+
+/* =========================================================
+   3D INITIALIZATION
+========================================================= */
+
+function init3DView(){
+
+const container =
+document.getElementById('view-3d');
+
+const loadingOverlay =
+document.getElementById(
+'loading-overlay'
+);
+
+const loadingText =
+document.getElementById(
+'loading-text'
+);
+
+
+const width =
+container.clientWidth ||
+window.innerWidth;
+
+const height =
+container.clientHeight ||
+window.innerHeight;
+
+
+/* ---------------------------------------------------------
+   SCENE
+--------------------------------------------------------- */
+
+scene3d =
+new THREE.Scene();
+
+scene3d.background =
+new THREE.Color(0x0b0f19);
+
+
+/* ---------------------------------------------------------
+   CAMERA
+--------------------------------------------------------- */
+
+camera3d =
+new THREE.PerspectiveCamera(
+
+55,
+
+width/height,
+
+0.01,
+
+100000
+
+);
+
+
+/* ---------------------------------------------------------
+   RENDERER
+--------------------------------------------------------- */
+
+renderer3d =
+new THREE.WebGLRenderer({
+
+antialias:true,
+
+alpha:false,
+
+powerPreference:'high-performance',
+
+logarithmicDepthBuffer:true
+
+});
+
+
+renderer3d.setPixelRatio(
+Math.min(
+window.devicePixelRatio,
+2
+)
+);
+
+renderer3d.setSize(
+width,
+height
+);
+
+renderer3d.outputEncoding =
+THREE.sRGBEncoding;
+
+renderer3d.domElement.style.display =
+'block';
+
+container.appendChild(
+renderer3d.domElement
+);
+
+
+/* ---------------------------------------------------------
+   ORBIT CONTROLS
+--------------------------------------------------------- */
+
+controls3d =
+new THREE.OrbitControls(
+
+camera3d,
+
+renderer3d.domElement
+
+);
+
+
+/*
+
+IMPORTANT:
+
+Three.js is Y-UP.
+
+We therefore create a parent group which maps:
+
+Metashape X -> Three X
+
+Metashape Y -> Three Z
+
+Metashape Z -> Three Y
+
+This gives us a proper:
+
+X = East/West
+
+Y = North/South
+
+Z = UP
+
+world.
+
+*/
+
+controls3d.enableDamping = true;
+
+controls3d.dampingFactor = .07;
+
+controls3d.rotateSpeed = .65;
+
+controls3d.zoomSpeed = 1.0;
+
+controls3d.panSpeed = .8;
+
+controls3d.enableRotate = true;
+
+controls3d.enableZoom = true;
+
+controls3d.enablePan = true;
+
+controls3d.screenSpacePanning = false;
+
+controls3d.minDistance = .01;
+
+controls3d.maxDistance = 1000000;
+
+controls3d.autoRotate = false;
+
+controls3d.autoRotateSpeed = .7;
+
+
+/* ---------------------------------------------------------
+   LOADING
+--------------------------------------------------------- */
+
+loadingOverlay.style.display =
+'flex';
+
+
+loadingText.innerText =
+'Loading cloud.ply...';
+
+
+/* ---------------------------------------------------------
+   PLY LOADER
+--------------------------------------------------------- */
+
+const loader =
+new THREE.PLYLoader();
+
+
+loader.load(
+
+'./cloud.ply',
+
+
+function(geometry){
+
+console.log(
+'PLY loaded successfully'
+);
+
+
+/* ---------------------------------------------------------
+   BOUNDING BOX
+--------------------------------------------------------- */
+
+geometry.computeBoundingBox();
+
+const sourceBox =
+geometry.boundingBox.clone();
+
+
+cloudCenter =
+sourceBox.getCenter(
+new THREE.Vector3()
+);
+
+
+cloudSize =
+sourceBox.getSize(
+new THREE.Vector3()
+);
+
+
+const sphere =
+sourceBox.getBoundingSphere(
+new THREE.Sphere()
+);
+
+
+cloudRadius =
+sphere.radius;
+
+
+/* ---------------------------------------------------------
+   CENTER GEOMETRY
+--------------------------------------------------------- */
+
+geometry.translate(
+
+-cloudCenter.x,
+
+-cloudCenter.y,
+
+-cloudCenter.z
+
+);
+
+
+/* ---------------------------------------------------------
+   CREATE WORLD GROUP
+--------------------------------------------------------- */
+
+pointCloudGroup =
+new THREE.Group();
+
+
+/*
+
+This is the key part.
+
+Metashape:
+
+X = horizontal
+
+Y = horizontal
+
+Z = vertical
+
+
+Three:
+
+X = horizontal
+
+Y = vertical
+
+Z = depth
+
+
+Rotate the WORLD GROUP, not the PLY itself.
+
+*/
+
+pointCloudGroup.rotation.x =
+-Math.PI / 2;
+
+
+/* ---------------------------------------------------------
+   POINT COLORS
+--------------------------------------------------------- */
+
+const hasColors =
+geometry.hasAttribute('color');
+
+
+/* ---------------------------------------------------------
+   POINT SIZE
+--------------------------------------------------------- */
+
+const maxDimension =
+Math.max(
+
+cloudSize.x,
+
+cloudSize.y,
+
+cloudSize.z
+
+);
+
+
+let pointSize =
+maxDimension * .0012;
+
+
+pointSize =
+THREE.MathUtils.clamp(
+
+pointSize,
+
+maxDimension * .0001,
+
+maxDimension * .008
+
+);
+
+
+/* ---------------------------------------------------------
+   POINT MATERIAL
+--------------------------------------------------------- */
+
+pointsMaterial3d =
+new THREE.PointsMaterial({
+
+size:pointSize,
+
+sizeAttenuation:true,
+
+vertexColors:hasColors,
+
+color:
+hasColors
+?0xffffff
+:0x38bdf8,
+
+transparent:false,
+
+opacity:1,
+
+depthTest:true,
+
+depthWrite:true
+
+});
+
+
+/* ---------------------------------------------------------
+   POINT CLOUD
+--------------------------------------------------------- */
+
+pointCloud3d =
+new THREE.Points(
+
+geometry,
+
+pointsMaterial3d
+
+);
+
+
+pointCloud3d.frustumCulled =
+true;
+
+
+pointCloudGroup.add(
+pointCloud3d
+);
+
+
+scene3d.add(
+pointCloudGroup
+);
+
+
+/* ---------------------------------------------------------
+   GROUND GRID
+--------------------------------------------------------- */
+
+const gridSize =
+Math.max(
+
+cloudSize.x,
+
+cloudSize.y
+
+) * 1.5;
+
+
+grid3d =
+new THREE.GridHelper(
+
+gridSize,
+
+20
+
+);
+
+
+/*
+
+Because our world group rotates X -90,
+
+the normal Three.js grid (XY horizontal)
+must be positioned before transformation.
+
+Put grid into the same coordinate system.
+
+*/
+
+grid3d.position.y =
+-cloudSize.z / 2;
+
+
+grid3d.rotation.x =
+0;
+
+
+grid3d.material.transparent =
+true;
+
+grid3d.material.opacity =
+.18;
+
+
+pointCloudGroup.add(
+grid3d
+);
+
+
+/* ---------------------------------------------------------
+   AXES
+--------------------------------------------------------- */
+
+const axisLength =
+Math.max(
+
+cloudSize.x,
+
+cloudSize.y,
+
+cloudSize.z
+
+) * .3;
+
+
+axes3d =
+new THREE.AxesHelper(
+axisLength
+);
+
+
+/*
+
+Axes are placed in the same
+Metashape coordinate system.
+
+After group rotation:
+
+X remains X
+
+Y becomes depth
+
+Z becomes vertical
+
+*/
+
+pointCloudGroup.add(
+axes3d
+);
+
+
+/* ---------------------------------------------------------
+   CAMERA FIT
+--------------------------------------------------------- */
+
+const maxDim =
+Math.max(
+
+cloudSize.x,
+
+cloudSize.y,
+
+cloudSize.z
+
+);
+
+
+const distance =
+maxDim * 1.7;
+
+
+/*
+
+Oblique inspection view.
+
+Camera coordinates are Three.js:
+
+X = horizontal
+
+Y = vertical
+
+Z = depth
+
+*/
+
+camera3d.position.set(
+
+distance,
+
+distance*.75,
+
+distance
+
+);
+
+
+/* ---------------------------------------------------------
+   CAMERA CLIPPING
+--------------------------------------------------------- */
+
+camera3d.near =
+Math.max(
+
+maxDim*.00001,
+
+.001
+
+);
+
+
+camera3d.far =
+Math.max(
+
+maxDim*100,
+
+1000
+
+);
+
+
+camera3d.updateProjectionMatrix();
+
+
+/* ---------------------------------------------------------
+   TARGET
+--------------------------------------------------------- */
+
+controls3d.target.set(
+
+0,
+
+0,
+
+0
+
+);
+
+
+controls3d.update();
+
+
+/* ---------------------------------------------------------
+   SAVE DEFAULT
+--------------------------------------------------------- */
+
+defaultCameraPosition.copy(
+camera3d.position
+);
+
+defaultTarget.copy(
+controls3d.target
+);
+
+
+/* ---------------------------------------------------------
+   STATISTICS
+--------------------------------------------------------- */
+
+const position =
+geometry.getAttribute(
+'position'
+);
+
+
+const pointCount =
+position
+?position.count
+:0;
+
+
+console.log(
+'Points:',
+pointCount.toLocaleString()
+);
+
+console.log(
+'X size:',
+cloudSize.x
+);
+
+console.log(
+'Y size:',
+cloudSize.y
+);
+
+console.log(
+'Z size:',
+cloudSize.z
+);
+
+
+/* ---------------------------------------------------------
+   CREATE CONTROLS
+--------------------------------------------------------- */
+
+create3DControls(
+pointCount
+);
+
+
+/* ---------------------------------------------------------
+   HIDE LOADING
+--------------------------------------------------------- */
+
+loadingOverlay.style.display =
+'none';
+
+},
+
+
+function(xhr){
+
+if(xhr.lengthComputable){
+
+const percent =
+Math.round(
+
+(xhr.loaded/xhr.total)*100
+
+);
+
+loadingText.innerText =
+`Loading cloud.ply... ${percent}%`;
+
+}else{
+
+loadingText.innerText =
+'Loading cloud.ply...';
+
+}
+
+},
+
+
+function(error){
+
+console.error(
+'PLY loading error:',
+error
+);
+
+loadingText.innerText =
+'Failed to load cloud.ply';
+
+}
+
+);
+
+
+is3dInitialized=true;
+
+}
+
+
+/* =========================================================
+   3D CONTROL PANEL
+========================================================= */
+
+function create3DControls(pointCount){
+
+if(
+document.getElementById(
+'pc-controls'
+)
+)return;
+
+
+const panel =
+document.createElement('div');
+
+
+panel.id =
+'pc-controls';
+
+
+panel.innerHTML = `
+
+<div class="pc-title">
+Point Cloud Controls
+</div>
+
+
+<div class="pc-row">
+
+<div class="pc-row-header">
+
+<span>Point Size</span>
+
+<span id="pc-size-value">
+100%
+</span>
+
+</div>
+
+<input
+id="pc-size"
+type="range"
+min=".2"
+max="5"
+step=".1"
+value="1"
+>
+
+</div>
+
+
+<div class="pc-row">
+
+<div class="pc-row-header">
+
+<span>Opacity</span>
+
+<span id="pc-opacity-value">
+100%
+</span>
+
+</div>
+
+<input
+id="pc-opacity"
+type="range"
+min=".1"
+max="1"
+step=".05"
+value="1"
+>
+
+</div>
+
+
+<div class="pc-buttons">
+
+<button id="pc-home">
+<i class="fa-solid fa-cube"></i>
+3D
+</button>
+
+<button id="pc-top">
+<i class="fa-solid fa-arrow-down"></i>
+Top
+</button>
+
+<button id="pc-front">
+<i class="fa-solid fa-arrows-up-down"></i>
+Front
+</button>
+
+<button id="pc-side">
+<i class="fa-solid fa-arrows-left-right"></i>
+Side
+</button>
+
+<button id="pc-reset">
+Reset
+</button>
+
+<button id="pc-grid">
+Grid
+</button>
+
+<button id="pc-auto">
+Auto Rotate
+</button>
+
+<button id="pc-full">
+Fullscreen
+</button>
+
+</div>
+
+
+<div class="pc-stats">
+
+<b>Points:</b>
+${pointCount.toLocaleString()}
+
+<br>
+
+<b>Coordinate system:</b>
+Z-UP
+
+<br>
+
+<b>X:</b>
+${cloudSize.x.toFixed(2)}
+
+<br>
+
+<b>Y:</b>
+${cloudSize.y.toFixed(2)}
+
+<br>
+
+<b>Z:</b>
+${cloudSize.z.toFixed(2)}
+
+</div>
+
+`;
+
+
+document
+.getElementById('view-3d')
+.appendChild(panel);
+
+
+/* ---------------------------------------------------------
+   POINT SIZE
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-size')
+.addEventListener(
+'input',
+function(){
+
+if(!pointsMaterial3d)return;
+
+
+const factor =
+parseFloat(this.value);
+
+
+const maxDim =
+Math.max(
+
+cloudSize.x,
+
+cloudSize.y,
+
+cloudSize.z
+
+);
+
+
+const base =
+maxDim*.0012;
+
+
+pointsMaterial3d.size =
+base*factor;
+
+
+document.getElementById(
+'pc-size-value'
+).innerText =
+Math.round(factor*100)+'%';
+
+});
+
+
+/* ---------------------------------------------------------
+   OPACITY
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-opacity')
+.addEventListener(
+'input',
+function(){
+
+if(!pointsMaterial3d)return;
+
+
+const value =
+parseFloat(this.value);
+
+
+pointsMaterial3d.opacity =
+value;
+
+pointsMaterial3d.transparent =
+value<1;
+
+
+document.getElementById(
+'pc-opacity-value'
+).innerText =
+Math.round(value*100)+'%';
+
+});
+
+
+/* ---------------------------------------------------------
+   3D VIEW
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-home')
+.onclick =
+function(){
+
+set3DView(
+'oblique'
+);
+
+};
+
+
+/* ---------------------------------------------------------
+   TOP
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-top')
+.onclick =
+function(){
+
+set3DView(
+'top'
+);
+
+};
+
+
+/* ---------------------------------------------------------
+   FRONT
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-front')
+.onclick =
+function(){
+
+set3DView(
+'front'
+);
+
+};
+
+
+/* ---------------------------------------------------------
+   SIDE
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-side')
+.onclick =
+function(){
+
+set3DView(
+'side'
+);
+
+};
+
+
+/* ---------------------------------------------------------
+   RESET
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-reset')
+.onclick =
+function(){
+
+camera3d.position.copy(
+defaultCameraPosition
+);
+
+controls3d.target.copy(
+defaultTarget
+);
+
+controls3d.update();
+
+};
+
+
+/* ---------------------------------------------------------
+   GRID
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-grid')
+.onclick =
+function(){
+
+if(grid3d){
+
+grid3d.visible =
+!grid3d.visible;
+
+}
+
+};
+
+
+/* ---------------------------------------------------------
+   AUTO ROTATE
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-auto')
+.onclick =
+function(){
+
+controls3d.autoRotate =
+!controls3d.autoRotate;
+
+};
+
+
+/* ---------------------------------------------------------
+   FULLSCREEN
+--------------------------------------------------------- */
+
+document
+.getElementById('pc-full')
+.onclick =
+function(){
+
+const element =
+document.getElementById(
+'view-3d'
+);
+
+
+if(!document.fullscreenElement){
+
+element.requestFullscreen();
+
+}else{
+
+document.exitFullscreen();
+
+}
+
+};
+
+}
+
+
+/* =========================================================
+   CAMERA VIEW FUNCTIONS
+========================================================= */
+
+function set3DView(view){
+
+if(!camera3d ||
+!controls3d)return;
+
+
+const maxDim =
+Math.max(
+
+cloudSize.x,
+
+cloudSize.y,
+
+cloudSize.z
+
+);
+
+
+const distance =
+maxDim*1.7;
+
+
+/* ---------------------------------------------------------
+   OBLIQUE
+--------------------------------------------------------- */
+
+if(view==='oblique'){
+
+camera3d.position.set(
+
+distance,
+
+distance*.75,
+
+distance
+
+);
+
+}
+
+
+/* ---------------------------------------------------------
+   TOP
+--------------------------------------------------------- */
+
+if(view==='top'){
+
+camera3d.position.set(
+
+0,
+
+distance,
+
+0
+
+);
+
+}
+
+
+/* ---------------------------------------------------------
+   FRONT
+--------------------------------------------------------- */
+
+if(view==='front'){
+
+camera3d.position.set(
+
+0,
+
+0,
+
+distance
+
+);
+
+}
+
+
+/* ---------------------------------------------------------
+   SIDE
+--------------------------------------------------------- */
+
+if(view==='side'){
+
+camera3d.position.set(
+
+distance,
+
+0,
+
+0
+
+);
+
+}
+
+
+controls3d.target.set(
+
+0,
+
+0,
+
+0
+
+);
+
+controls3d.update();
+
+}
+
+
+/* =========================================================
+   3D ANIMATION
+========================================================= */
+
+function animate3D(){
+
+if(currentMode!=='3d')return;
+
+
+animationFrameId =
+requestAnimationFrame(
+animate3D
+);
+
+
+if(controls3d){
+
+controls3d.update();
+
+}
+
+
+if(
+renderer3d &&
+scene3d &&
+camera3d
+){
+
+renderer3d.render(
+scene3d,
+camera3d
+);
+
+}
+
+}
+
+
+/* =========================================================
+   PAUSE
+========================================================= */
+
+function pause3DRenderer(){
+
+if(animationFrameId){
+
+cancelAnimationFrame(
+animationFrameId
+);
+
+animationFrameId=null;
+
+}
+
+}
+
+
+/* =========================================================
+   RESUME
+========================================================= */
+
+function resume3DRenderer(){
+
+if(!is3dInitialized){
+
+init3DView();
+
+}
+
+if(!animationFrameId){
+
+animate3D();
+
+}
+
+}
+
+
+/* =========================================================
+   MODE SWITCH
+========================================================= */
+
+window.switchMode=function(mode){
+
+if(mode===currentMode)return;
+
+
+currentMode=mode;
+
+
+const view2D =
+document.getElementById(
+'view-2d'
+);
+
+const view3D =
+document.getElementById(
+'view-3d'
+);
+
+const card2D =
+document.getElementById(
+'card-2d'
+);
+
+const card3D =
+document.getElementById(
+'card-3d'
+);
+
+const label =
+document.getElementById(
+'active-mode-label'
+);
+
+
+if(mode==='2d'){
+
+view2D.classList
+.remove('inactive');
+
+view2D.classList
+.add('active');
+
+
+view3D.classList
+.remove('active');
+
+view3D.classList
+.add('inactive');
+
+
+card2D.classList
+.add('active');
+
+card3D.classList
+.remove('active');
+
+
+label.innerText =
+`Active Mode: 2D ${activeRasterType.toUpperCase()}`;
+
+
+pause3DRenderer();
+
+
+setTimeout(
+function(){
+
+map2d.invalidateSize();
+
+map2d.fitBounds(
+SITE_BOUNDS
+);
+
+},
+150
+);
+
+}
+
+
+else{
+
+
+view3D.classList
+.remove('inactive');
+
+view3D.classList
+.add('active');
+
+
+view2D.classList
+.remove('active');
+
+view2D.classList
+.add('inactive');
+
+
+card3D.classList
+.add('active');
+
+card2D.classList
+.remove('active');
+
+
+label.innerText =
+'Active Mode: 3D Point Cloud';
+
+
+resume3DRenderer();
+
+
+setTimeout(
+function(){
+
+if(renderer3d &&
+camera3d){
+
+const w =
+view3D.clientWidth;
+
+const h =
+view3D.clientHeight;
+
+
+camera3d.aspect =
+w/h;
+
+camera3d.updateProjectionMatrix();
+
+renderer3d.setSize(
+w,
+h
+);
+
+}
+
+},
+100
+);
+
+}
+
+};
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+window.toggleSidebar=function(){
+
+const sidebar =
+document.getElementById(
+'left-sidebar'
+);
+
+const icon =
+document.getElementById(
+'collapse-icon'
+);
+
+
+if(sidebar.style.width==='44px'){
+
+sidebar.style.width='230px';
+
+icon.className =
+'fa-solid fa-angles-left';
+
+}else{
+
+sidebar.style.width='44px';
+
+icon.className =
+'fa-solid fa-angles-right';
+
+}
+
+};
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+'resize',
+function(){
+
+if(
+currentMode==='2d' &&
+map2d
+){
+
+map2d.invalidateSize();
+
+}
+
+
+if(
+currentMode==='3d' &&
+renderer3d &&
+camera3d
+){
+
+const view =
+document.getElementById(
+'view-3d'
+);
+
+
+const width =
+view.clientWidth;
+
+const height =
+view.clientHeight;
+
+
+camera3d.aspect =
+width/height;
+
+camera3d.updateProjectionMatrix();
+
+
+renderer3d.setSize(
+width,
+height
+);
+
+}
+
+});
+
+
+/* =========================================================
+   KEYBOARD SHORTCUTS
+========================================================= */
+
+window.addEventListener(
+'keydown',
+function(e){
+
+if(currentMode!=='3d')return;
+
+
+/*
+
+1 = Oblique
+
+2 = Top
+
+3 = Front
+
+4 = Side
+
+R = Reset
+
+G = Grid
+
+*/
+
+if(e.key==='1'){
+
+set3DView('oblique');
+
+}
+
+if(e.key==='2'){
+
+set3DView('top');
+
+}
+
+if(e.key==='3'){
+
+set3DView('front');
+
+}
+
+if(e.key==='4'){
+
+set3DView('side');
+
+}
+
+if(
+e.key.toLowerCase()==='r'
+){
+
+camera3d.position.copy(
+defaultCameraPosition
+);
+
+controls3d.target.copy(
+defaultTarget
+);
+
+controls3d.update();
+
+}
+
+if(
+e.key.toLowerCase()==='g'
+){
+
+if(grid3d){
+
+grid3d.visible =
+!grid3d.visible;
+
+}
+
+}
+
+});
+
+
+/* =========================================================
+   START
+========================================================= */
+
+window.addEventListener(
+'DOMContentLoaded',
+function(){
+
+init2DMap();
+
+});
+
+</script>
+
 </body>
 </html>
