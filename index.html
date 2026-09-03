@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Mine Site GeoViewer - Rituraj Gogoi</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,6 +18,7 @@
       box-sizing: border-box;
       font-family: 'Inter', sans-serif;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
@@ -26,6 +27,7 @@
       overflow: hidden;
       background-color: #0b0f19;
       color: #f8fafc;
+      position: fixed;
     }
 
     /* Welcome / Splash Screen Overlay */
@@ -39,6 +41,7 @@
       justify-content: center;
       z-index: 9999;
       transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+      padding: 20px;
     }
 
     #welcome-screen.hidden {
@@ -49,8 +52,8 @@
 
     .splash-logo-container {
       position: relative;
-      width: 140px;
-      height: 140px;
+      width: 130px;
+      height: 130px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -76,9 +79,10 @@
     }
 
     .splash-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: 0.8px;
+      text-align: center;
       background: linear-gradient(135deg, #38bdf8 0%, #c084fc 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -86,11 +90,12 @@
     }
 
     .splash-subtitle {
-      font-size: 12px;
+      font-size: 11px;
       color: #94a3b8;
       letter-spacing: 1px;
       text-transform: uppercase;
       font-weight: 500;
+      text-align: center;
       margin-bottom: 28px;
     }
 
@@ -124,7 +129,7 @@
       100% { opacity: 1; transform: scale(1.15); }
     }
 
-    /* Main UI */
+    /* Main Viewport Container */
     #viewport-wrapper {
       position: absolute;
       top: 0;
@@ -132,6 +137,7 @@
       width: 100%;
       height: 100%;
       z-index: 1;
+      touch-action: none;
     }
 
     .viewport {
@@ -170,6 +176,7 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     }
 
+    /* Top Navigation Header */
     .main-header {
       position: absolute;
       top: 0;
@@ -179,7 +186,8 @@
       background: linear-gradient(180deg, rgba(11, 15, 25, 0.96), rgba(11, 15, 25, 0));
       display: flex;
       align-items: center;
-      padding: 0 24px;
+      padding: 0 20px;
+      padding-top: env(safe-area-inset-top, 0px);
       z-index: 100;
       pointer-events: none;
     }
@@ -187,33 +195,35 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      pointer-events: auto;
     }
 
     .brand-icon {
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 8px;
       background: linear-gradient(135deg, #06b6d4, #3b82f6);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 15px;
       box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
     }
 
     .brand h2 {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.5px;
     }
 
+    /* Mode Selector (2D vs 3D) */
     .mode-selector-panel {
       position: absolute;
       top: 60px;
-      left: 24px;
+      left: 20px;
       z-index: 100;
-      padding: 12px;
+      padding: 10px 12px;
       border-radius: 16px;
       display: flex;
       flex-direction: column;
@@ -221,7 +231,7 @@
     }
 
     .panel-label {
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: #94a3b8;
@@ -230,12 +240,12 @@
 
     .mode-cards-container {
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
 
     .mode-card {
-      width: 110px;
-      height: 76px;
+      width: 100px;
+      height: 68px;
       background: rgba(30, 41, 59, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 12px;
@@ -243,7 +253,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
       cursor: pointer;
       transition: 0.25s;
     }
@@ -255,7 +265,7 @@
     }
 
     .mode-card .card-icon-glow {
-      font-size: 20px;
+      font-size: 18px;
       color: #94a3b8;
     }
 
@@ -278,17 +288,18 @@
       color: #38bdf8;
     }
 
+    /* Left Sidebar */
     .left-sidebar {
       position: absolute;
-      top: 175px;
-      left: 24px;
-      bottom: 40px;
-      width: 230px;
+      top: 168px;
+      left: 20px;
+      bottom: 38px;
+      width: 220px;
       border-radius: 16px;
       z-index: 100;
       display: flex;
-      overflow: visible; /* Allows hover tooltips to pop outside */
-      transition: width 0.3s ease;
+      overflow: hidden;
+      transition: width 0.3s ease, transform 0.3s ease;
     }
 
     .sidebar-tab-strip {
@@ -301,8 +312,6 @@
       align-items: center;
       padding: 10px 0;
       gap: 12px;
-      border-top-left-radius: 16px;
-      border-bottom-left-radius: 16px;
     }
 
     .strip-btn, .strip-toggle {
@@ -334,7 +343,6 @@
       flex-direction: column;
       gap: 10px;
       overflow-y: auto;
-      overflow-x: visible;
     }
 
     .section-heading {
@@ -346,10 +354,10 @@
     }
 
     .tool-card {
-      position: relative;
       background: rgba(30, 41, 59, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 10px;
+      overflow: hidden;
       cursor: pointer;
       transition: border 0.2s, transform 0.2s;
     }
@@ -365,10 +373,8 @@
     }
 
     .tool-preview {
-      height: 44px;
+      height: 40px;
       background-size: cover;
-      border-top-left-radius: 9px;
-      border-top-right-radius: 9px;
     }
 
     .ortho-bg {
@@ -389,8 +395,6 @@
       justify-content: space-between;
       align-items: center;
       background: rgba(15, 23, 42, 0.85);
-      border-bottom-left-radius: 9px;
-      border-bottom-right-radius: 9px;
     }
 
     .tool-info span {
@@ -407,51 +411,8 @@
       color: #38bdf8;
     }
 
-    /* Hover Tooltip Popover */
-    .tool-card .card-tooltip {
-      position: absolute;
-      left: calc(100% + 14px);
-      top: 50%;
-      transform: translateY(-50%) translateX(-8px);
-      width: 250px;
-      padding: 10px 12px;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      border-radius: 8px;
-      color: #e2e8f0;
-      font-size: 11px;
-      line-height: 1.45;
-      font-weight: 400;
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-      z-index: 500;
-    }
-
-    /* Tooltip Arrow */
-    .tool-card .card-tooltip::before {
-      content: '';
-      position: absolute;
-      right: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      border-width: 6px;
-      border-style: solid;
-      border-color: transparent rgba(56, 189, 248, 0.35) transparent transparent;
-    }
-
-    .tool-card:hover .card-tooltip {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(-50%) translateX(0);
-    }
-
     .slider-box {
-      margin-top: 6px;
+      margin-top: 4px;
       background: rgba(30, 41, 59, 0.3);
       padding: 10px;
       border-radius: 8px;
@@ -470,14 +431,16 @@
     .slider-box input {
       width: 100%;
       accent-color: #38bdf8;
+      cursor: pointer;
     }
 
+    /* 3D Floating Control Window */
     #pc-controls {
       position: absolute;
-      right: 24px;
-      top: 70px;
-      width: 245px;
-      padding: 14px;
+      right: 20px;
+      top: 60px;
+      width: 220px;
+      padding: 12px;
       border-radius: 14px;
       background: rgba(15, 23, 42, 0.9);
       backdrop-filter: blur(18px);
@@ -485,7 +448,7 @@
       box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
       z-index: 250;
       color: #e2e8f0;
-      font-size: 12px;
+      font-size: 11px;
     }
 
     .pc-title {
@@ -494,17 +457,17 @@
       letter-spacing: 0.8px;
       color: #38bdf8;
       text-transform: uppercase;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .pc-row {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .pc-row-header {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       color: #94a3b8;
     }
 
@@ -524,9 +487,10 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #cbd5e1;
       border-radius: 7px;
-      padding: 7px;
+      padding: 6px;
       font-size: 11px;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     .pc-buttons button:hover {
@@ -549,8 +513,8 @@
     }
 
     .cyber-spinner {
-      width: 42px;
-      height: 42px;
+      width: 38px;
+      height: 38px;
       border: 3px solid rgba(56, 189, 248, 0.15);
       border-top: 3px solid #38bdf8;
       border-radius: 50%;
@@ -561,6 +525,7 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Bottom Status Bar */
     .bottom-bar {
       position: absolute;
       bottom: 0;
@@ -572,7 +537,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 16px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
       font-size: 11px;
       color: #64748b;
       z-index: 100;
@@ -583,10 +549,86 @@
       width: 100%;
       height: 100%;
       cursor: grab;
+      touch-action: none;
     }
 
     #view-3d canvas:active {
       cursor: grabbing;
+    }
+
+    /* =========================================================
+       RESPONSIVE MOBILE / TABLET OPTIMIZATIONS (<768px)
+    ========================================================= */
+    @media (max-width: 768px) {
+      .main-header {
+        padding: 0 14px;
+        height: 48px;
+      }
+
+      .brand h2 {
+        font-size: 14px;
+      }
+
+      .mode-selector-panel {
+        top: 54px;
+        left: 12px;
+        right: 12px;
+        padding: 8px 10px;
+        border-radius: 12px;
+      }
+
+      .mode-cards-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .mode-card {
+        width: 100%;
+        height: 48px;
+        flex-direction: row;
+        gap: 8px;
+      }
+
+      .mode-card .card-icon-glow {
+        font-size: 16px;
+      }
+
+      /* Collapse sidebar on mobile to not crowd small screens */
+      .left-sidebar {
+        top: auto;
+        bottom: 34px;
+        left: 12px;
+        width: 44px; /* default collapsed state on phones */
+        height: 250px;
+      }
+
+      .left-sidebar.expanded {
+        width: calc(100% - 24px);
+      }
+
+      /* 3D control panel becomes a bottom drawer sheet on mobile */
+      #pc-controls {
+        top: auto;
+        bottom: 38px;
+        right: 12px;
+        width: 200px;
+        max-height: 50vh;
+        overflow-y: auto;
+      }
+
+      .bottom-bar {
+        font-size: 10px;
+        padding: 0 12px;
+      }
+
+      .bottom-bar div:first-child {
+        display: none; /* Hide legal text on phones to fit active layer indicator */
+      }
+
+      .bottom-bar #coord-display {
+        width: 100%;
+        text-align: center;
+      }
     }
   </style>
 </head>
@@ -647,9 +689,6 @@
           <span>Orthomosaic</span>
           <i class="fa-solid fa-circle-check active-indicator"></i>
         </div>
-        <div class="card-tooltip">
-          An orthomosaic map is a high-resolution, geometrically corrected aerial map made by stitching together many overlapping smaller photos.
-        </div>
       </div>
 
       <div class="tool-card layer-option" id="layer-card-dsm" onclick="selectRasterLayer('dsm')">
@@ -658,9 +697,6 @@
           <span>DSM (Surface)</span>
           <i class="fa-solid fa-circle-check active-indicator"></i>
         </div>
-        <div class="card-tooltip">
-          Digital Surface Model (DSM) captures the top of everything sitting on the surface, including vegetation and man-made structures.
-        </div>
       </div>
 
       <div class="tool-card layer-option" id="layer-card-dtm" onclick="selectRasterLayer('dtm')">
@@ -668,9 +704,6 @@
         <div class="tool-info">
           <span>DTM (Terrain)</span>
           <i class="fa-solid fa-circle-check active-indicator"></i>
-        </div>
-        <div class="card-tooltip">
-          A Digital Terrain Model (DTM) shows only the bare-earth ground with all trees and buildings removed.
         </div>
       </div>
 
@@ -733,14 +766,14 @@
     const SITE_CENTER = [25.211710297341842, 91.06183829276549];
     const SITE_BOUNDS = L.latLngBounds(SW_CORNER, NE_CORNER);
 
-    // Welcome Screen Animation Trigger
+    // Welcome Screen Animation
     function runWelcomeScreen() {
       const splash = document.getElementById('welcome-screen');
       const progress = document.getElementById('splash-progress');
 
       setTimeout(() => { progress.style.width = '45%'; }, 300);
-      setTimeout(() => { progress.style.width = '85%'; }, 900);
-      setTimeout(() => { progress.style.width = '100%'; }, 1400);
+      setTimeout(() => { progress.style.width = '85%'; }, 800);
+      setTimeout(() => { progress.style.width = '100%'; }, 1200);
 
       setTimeout(() => {
         splash.classList.add('hidden');
@@ -748,10 +781,10 @@
           map2d.invalidateSize();
           map2d.fitBounds(SITE_BOUNDS);
         }
-      }, 1900);
+      }, 1600);
     }
 
-    // Dynamic Canvas Layer: Removes only the black border for DSM & DTM (RGB <= 8 -> alpha 0)
+    // Dynamic Canvas: Cleans black collar for DSM & DTM
     const TransparentBlackTileLayer = L.TileLayer.extend({
       createTile: function(coords, done) {
         const canvas = document.createElement('canvas');
@@ -925,7 +958,6 @@
           const hasColors = geometry.hasAttribute('color');
           const maxDimension = Math.max(cloudSize.x, cloudSize.y, cloudSize.z);
 
-          // Initial point size starting at 60%
           const baseSize = maxDimension * 0.0012;
           const initialSize = baseSize * 0.6;
 
@@ -935,7 +967,7 @@
             vertexColors: hasColors,
             color: hasColors ? 0xffffff : 0x38bdf8,
             transparent: true,
-            opacity: 0.8, // Initial opacity starting at 80%
+            opacity: 0.8,
             depthTest: true,
             depthWrite: true
           });
@@ -984,7 +1016,6 @@
       is3dInitialized = true;
     }
 
-    // 3D Control Panel: Dimensions and Coordinate System stats removed
     function create3DControls() {
       if (document.getElementById('pc-controls')) return;
 
@@ -1156,13 +1187,19 @@
     window.toggleSidebar = function() {
       const sidebar = document.getElementById('left-sidebar');
       const icon = document.getElementById('collapse-icon');
+      const isMobile = window.innerWidth <= 768;
 
-      if (sidebar.style.width === '44px') {
-        sidebar.style.width = '230px';
-        icon.className = 'fa-solid fa-angles-left';
+      if (isMobile) {
+        sidebar.classList.toggle('expanded');
+        icon.className = sidebar.classList.contains('expanded') ? 'fa-solid fa-angles-down' : 'fa-solid fa-angles-up';
       } else {
-        sidebar.style.width = '44px';
-        icon.className = 'fa-solid fa-angles-right';
+        if (sidebar.style.width === '44px') {
+          sidebar.style.width = '220px';
+          icon.className = 'fa-solid fa-angles-left';
+        } else {
+          sidebar.style.width = '44px';
+          icon.className = 'fa-solid fa-angles-right';
+        }
       }
     };
 
@@ -1175,22 +1212,6 @@
         camera3d.aspect = view.clientWidth / view.clientHeight;
         camera3d.updateProjectionMatrix();
         renderer3d.setSize(view.clientWidth, view.clientHeight);
-      }
-    });
-
-    window.addEventListener('keydown', function(e) {
-      if (currentMode !== '3d') return;
-      if (e.key === '1') set3DView('oblique');
-      if (e.key === '2') set3DView('top');
-      if (e.key === '3') set3DView('front');
-      if (e.key === '4') set3DView('side');
-      if (e.key.toLowerCase() === 'r') {
-        camera3d.position.copy(defaultCameraPosition);
-        controls3d.target.copy(defaultTarget);
-        controls3d.update();
-      }
-      if (e.key.toLowerCase() === 'g' && grid3d) {
-        grid3d.visible = !grid3d.visible;
       }
     });
 
