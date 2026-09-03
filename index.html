@@ -363,3 +363,645 @@
 
     .pc-buttons {
       display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .pc-buttons button {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, .1);
+      color: #cbd5e1;
+      border-radius: 7px;
+      padding: 7px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .pc-buttons button:hover {
+      background: #334155;
+      border-color: #38bdf8;
+      color: white;
+    }
+
+    .pc-stats {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      font-size: 10px;
+      line-height: 1.7;
+      color: #94a3b8;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 15, 25, .88);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      gap: 16px;
+    }
+
+    .cyber-spinner {
+      width: 42px;
+      height: 42px;
+      border: 3px solid rgba(56, 189, 248, .15);
+      border-top: 3px solid #38bdf8;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 28px;
+      background: rgba(11, 15, 25, .95);
+      border-top: 1px solid rgba(255, 255, 255, .05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 11px;
+      color: #64748b;
+      z-index: 100;
+    }
+
+    #view-3d canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    #view-3d canvas:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="main-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+      <h2>Mine Site GeoViewer</h2>
+    </div>
+  </header>
+
+  <div class="mode-selector-panel glass-card">
+    <span class="panel-label" id="active-mode-label">Active Mode: 2D Orthomosaic</span>
+    <div class="mode-cards-container">
+      <div id="card-2d" class="mode-card active" onclick="switchMode('2d')">
+        <div class="card-icon-glow">
+          <i class="fa-solid fa-globe"></i>
+        </div>
+        <span>2D Layers</span>
+      </div>
+
+      <div id="card-3d" class="mode-card" onclick="switchMode('3d')">
+        <div class="card-icon-glow">
+          <i class="fa-solid fa-cubes-stacked"></i>
+        </div>
+        <span>3D Point Cloud</span>
+      </div>
+    </div>
+  </div>
+
+  <aside class="left-sidebar glass-panel" id="left-sidebar">
+    <div class="sidebar-tab-strip">
+      <button class="strip-btn active"><i class="fa-solid fa-layer-group"></i></button>
+      <button class="strip-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-angles-left" id="collapse-icon"></i></button>
+    </div>
+
+    <div class="sidebar-content">
+      <span class="section-heading">2D Raster Tiles</span>
+
+      <div class="tool-card layer-option active" id="layer-card-ortho" onclick="selectRasterLayer('ortho')">
+        <div class="tool-preview ortho-bg"></div>
+        <div class="tool-info">
+          <span>Orthomosaic</span>
+          <i class="fa-solid fa-circle-check active-indicator"></i>
+        </div>
+      </div>
+
+      <div class="tool-card layer-option" id="layer-card-dsm" onclick="selectRasterLayer('dsm')">
+        <div class="tool-preview dsm-bg"></div>
+        <div class="tool-info">
+          <span>DSM (Surface)</span>
+          <i class="fa-solid fa-circle-check active-indicator"></i>
+        </div>
+      </div>
+
+      <div class="tool-card layer-option" id="layer-card-dtm" onclick="selectRasterLayer('dtm')">
+        <div class="tool-preview dtm-bg"></div>
+        <div class="tool-info">
+          <span>DTM (Terrain)</span>
+          <i class="fa-solid fa-circle-check active-indicator"></i>
+        </div>
+      </div>
+
+      <div class="slider-box">
+        <div class="slider-header">
+          <span>Layer Opacity</span>
+          <span id="opacity-val">100%</span>
+        </div>
+        <input type="range" id="layer-opacity" min="0" max="1" step=".05" value="1" oninput="setLayerOpacity(this.value)">
+      </div>
+    </div>
+  </aside>
+
+  <main id="viewport-wrapper">
+    <div id="view-2d" class="viewport active"></div>
+    <div id="view-3d" class="viewport inactive">
+      <div id="loading-overlay" class="loading-overlay" style="display:none">
+        <div class="cyber-spinner"></div>
+        <p id="loading-text">Loading point cloud...</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bottom-bar">
+    <div>© 2026 RITURAJ GOGOI | Ortho · DSM · DTM · Point Cloud</div>
+    <div id="coord-display">Lat: 25.211710° | Lng: 91.061838° | Layer: Orthomosaic</div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+
+  <script>
+    let currentMode = '2d';
+    let activeRasterType = 'ortho';
+    let map2d = null;
+    let tileLayers = {};
+    let currentTileLayer = null;
+
+    /* 3D Scene Components */
+    let renderer3d = null;
+    let scene3d = null;
+    let camera3d = null;
+    let controls3d = null;
+    let pointCloudGroup = null;
+    let pointCloud3d = null;
+    let pointsMaterial3d = null;
+    let grid3d = null;
+    let animationFrameId = null;
+    let is3dInitialized = false;
+
+    let cloudCenter = new THREE.Vector3();
+    let cloudSize = new THREE.Vector3();
+    let cloudRadius = 1;
+
+    let defaultCameraPosition = new THREE.Vector3();
+    let defaultTarget = new THREE.Vector3();
+
+    /* =========================================================
+       EXACT SITE BOUNDS (MATCHING GDAL LEAFLET.HTML)
+    ========================================================= */
+    const SW_CORNER = [25.210642333760696, 91.06061914668439];
+    const NE_CORNER = [25.21277826092299, 91.06305743884658];
+    const SITE_CENTER = [25.211710297341842, 91.06183829276549];
+
+    const SITE_BOUNDS = L.latLngBounds(SW_CORNER, NE_CORNER);
+    const PAN_BOUNDS = SITE_BOUNDS.pad(0.35);
+
+    /* =========================================================
+       2D MAP INITIALIZATION
+    ========================================================= */
+    function init2DMap() {
+      map2d = L.map('view-2d', {
+        zoomControl: false,
+        attributionControl: false,
+        center: SITE_CENTER,
+        zoom: 18,
+        minZoom: 14,             // Matches your lowest folder (14)
+        maxZoom: 22,
+        maxBounds: PAN_BOUNDS,   // Locks screen strictly to survey site
+        maxBoundsViscosity: 1.0
+      });
+
+      // Satellite Basemap
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 22
+      }).addTo(map2d);
+
+      // TMS Tile Configuration strictly matching your gdal2tiles export
+      const tileConfig = {
+        minZoom: 14,
+        maxNativeZoom: 20,
+        maxZoom: 22,
+        tms: true,               // CRITICAL: Required for GDAL TMS standard
+        opacity: 1.0
+      };
+
+      tileLayers = {
+        ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', tileConfig),
+        dsm:   L.tileLayer('./data/dsm/{z}/{x}/{y}.png',   tileConfig),
+        dtm:   L.tileLayer('./data/dtm/{z}/{x}/{y}.png',   tileConfig)
+      };
+
+      currentTileLayer = tileLayers.ortho;
+      currentTileLayer.addTo(map2d);
+
+      map2d.fitBounds(SITE_BOUNDS);
+
+      map2d.on('mousemove', function(e) {
+        document.getElementById('coord-display').innerText =
+          `Lat: ${e.latlng.lat.toFixed(6)}° | ` +
+          `Lng: ${e.latlng.lng.toFixed(6)}° | ` +
+          `Zoom: ${map2d.getZoom()} | ` +
+          `Layer: ${activeRasterType.toUpperCase()}`;
+      });
+    }
+
+    window.selectRasterLayer = function(type) {
+      if (activeRasterType === type) return;
+
+      if (currentTileLayer) {
+        map2d.removeLayer(currentTileLayer);
+      }
+
+      currentTileLayer = tileLayers[type];
+      if (currentTileLayer) {
+        currentTileLayer.addTo(map2d);
+        const opacity = parseFloat(document.getElementById('layer-opacity').value);
+        currentTileLayer.setOpacity(opacity);
+      }
+
+      activeRasterType = type;
+
+      document.querySelectorAll('.layer-option').forEach(el => el.classList.remove('active'));
+      const card = document.getElementById(`layer-card-${type}`);
+      if (card) card.classList.add('active');
+    };
+
+    window.setLayerOpacity = function(val) {
+      document.getElementById('opacity-val').innerText = Math.round(val * 100) + '%';
+      if (currentTileLayer) {
+        currentTileLayer.setOpacity(val);
+      }
+    };
+
+    /* =========================================================
+       3D INITIALIZATION (WITHOUT AXIS LINES)
+    ========================================================= */
+    function init3DView() {
+      const container = document.getElementById('view-3d');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const loadingText = document.getElementById('loading-text');
+
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || window.innerHeight;
+
+      scene3d = new THREE.Scene();
+      scene3d.background = new THREE.Color(0x0b0f19);
+
+      camera3d = new THREE.PerspectiveCamera(55, width / height, 0.01, 100000);
+
+      renderer3d = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: false,
+        powerPreference: 'high-performance',
+        logarithmicDepthBuffer: true
+      });
+
+      renderer3d.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer3d.setSize(width, height);
+      renderer3d.outputEncoding = THREE.sRGBEncoding;
+      renderer3d.domElement.style.display = 'block';
+      container.appendChild(renderer3d.domElement);
+
+      controls3d = new THREE.OrbitControls(camera3d, renderer3d.domElement);
+      controls3d.enableDamping = true;
+      controls3d.dampingFactor = 0.07;
+      controls3d.rotateSpeed = 0.65;
+      controls3d.zoomSpeed = 1.0;
+      controls3d.panSpeed = 0.8;
+      controls3d.screenSpacePanning = false;
+      controls3d.minDistance = 0.01;
+      controls3d.maxDistance = 1000000;
+      controls3d.autoRotate = false;
+      controls3d.autoRotateSpeed = 0.7;
+
+      loadingOverlay.style.display = 'flex';
+      loadingText.innerText = 'Loading cloud.ply...';
+
+      const loader = new THREE.PLYLoader();
+      loader.load(
+        './cloud.ply',
+        function(geometry) {
+          geometry.computeBoundingBox();
+          const sourceBox = geometry.boundingBox.clone();
+          cloudCenter = sourceBox.getCenter(new THREE.Vector3());
+          cloudSize = sourceBox.getSize(new THREE.Vector3());
+          const sphere = sourceBox.getBoundingSphere(new THREE.Sphere());
+          cloudRadius = sphere.radius;
+
+          geometry.translate(-cloudCenter.x, -cloudCenter.y, -cloudCenter.z);
+
+          pointCloudGroup = new THREE.Group();
+          pointCloudGroup.rotation.x = -Math.PI / 2;
+
+          const hasColors = geometry.hasAttribute('color');
+          const maxDimension = Math.max(cloudSize.x, cloudSize.y, cloudSize.z);
+          let pointSize = maxDimension * 0.0012;
+          pointSize = THREE.MathUtils.clamp(pointSize, maxDimension * 0.0001, maxDimension * 0.008);
+
+          pointsMaterial3d = new THREE.PointsMaterial({
+            size: pointSize,
+            sizeAttenuation: true,
+            vertexColors: hasColors,
+            color: hasColors ? 0xffffff : 0x38bdf8,
+            transparent: false,
+            opacity: 1,
+            depthTest: true,
+            depthWrite: true
+          });
+
+          pointCloud3d = new THREE.Points(geometry, pointsMaterial3d);
+          pointCloud3d.frustumCulled = true;
+          pointCloudGroup.add(pointCloud3d);
+
+          const gridSize = Math.max(cloudSize.x, cloudSize.y) * 1.5;
+          grid3d = new THREE.GridHelper(gridSize, 20);
+          grid3d.position.y = -cloudSize.z / 2;
+          grid3d.material.transparent = true;
+          grid3d.material.opacity = 0.18;
+          grid3d.visible = false;
+          pointCloudGroup.add(grid3d);
+
+          scene3d.add(pointCloudGroup);
+
+          const distance = maxDimension * 1.7;
+          camera3d.position.set(distance, distance * 0.75, distance);
+          camera3d.near = Math.max(maxDimension * 0.00001, 0.001);
+          camera3d.far = Math.max(maxDimension * 100, 1000);
+          camera3d.updateProjectionMatrix();
+
+          controls3d.target.set(0, 0, 0);
+          controls3d.update();
+
+          defaultCameraPosition.copy(camera3d.position);
+          defaultTarget.copy(controls3d.target);
+
+          const position = geometry.getAttribute('position');
+          const pointCount = position ? position.count : 0;
+
+          create3DControls(pointCount);
+          loadingOverlay.style.display = 'none';
+        },
+        function(xhr) {
+          if (xhr.lengthComputable) {
+            const percent = Math.round((xhr.loaded / xhr.total) * 100);
+            loadingText.innerText = `Loading cloud.ply... ${percent}%`;
+          }
+        },
+        function(error) {
+          console.error('PLY loading error:', error);
+          loadingText.innerText = 'Failed to load cloud.ply';
+        }
+      );
+
+      is3dInitialized = true;
+    }
+
+    /* =========================================================
+       3D CONTROLS FLOATING PANEL
+    ========================================================= */
+    function create3DControls(pointCount) {
+      if (document.getElementById('pc-controls')) return;
+
+      const panel = document.createElement('div');
+      panel.id = 'pc-controls';
+      panel.innerHTML = `
+        <div class="pc-title">Point Cloud Controls</div>
+        <div class="pc-row">
+          <div class="pc-row-header">
+            <span>Point Size</span>
+            <span id="pc-size-value">100%</span>
+          </div>
+          <input id="pc-size" type="range" min=".2" max="5" step=".1" value="1">
+        </div>
+        <div class="pc-row">
+          <div class="pc-row-header">
+            <span>Opacity</span>
+            <span id="pc-opacity-value">100%</span>
+          </div>
+          <input id="pc-opacity" type="range" min=".1" max="1" step=".05" value="1">
+        </div>
+        <div class="pc-buttons">
+          <button id="pc-home"><i class="fa-solid fa-cube"></i> 3D</button>
+          <button id="pc-top"><i class="fa-solid fa-arrow-down"></i> Top</button>
+          <button id="pc-front"><i class="fa-solid fa-arrows-up-down"></i> Front</button>
+          <button id="pc-side"><i class="fa-solid fa-arrows-left-right"></i> Side</button>
+          <button id="pc-reset">Reset</button>
+          <button id="pc-grid">Grid</button>
+          <button id="pc-auto">Auto Rotate</button>
+          <button id="pc-full">Fullscreen</button>
+        </div>
+        <div class="pc-stats">
+          <b>Points:</b> ${pointCount.toLocaleString()}<br>
+          <b>Coordinate system:</b> Z-UP<br>
+          <b>X:</b> ${cloudSize.x.toFixed(2)} m<br>
+          <b>Y:</b> ${cloudSize.y.toFixed(2)} m<br>
+          <b>Z:</b> ${cloudSize.z.toFixed(2)} m
+        </div>
+      `;
+
+      document.getElementById('view-3d').appendChild(panel);
+
+      document.getElementById('pc-size').addEventListener('input', function() {
+        if (!pointsMaterial3d) return;
+        const factor = parseFloat(this.value);
+        const maxDim = Math.max(cloudSize.x, cloudSize.y, cloudSize.z);
+        pointsMaterial3d.size = (maxDim * 0.0012) * factor;
+        document.getElementById('pc-size-value').innerText = Math.round(factor * 100) + '%';
+      });
+
+      document.getElementById('pc-opacity').addEventListener('input', function() {
+        if (!pointsMaterial3d) return;
+        const value = parseFloat(this.value);
+        pointsMaterial3d.opacity = value;
+        pointsMaterial3d.transparent = value < 1;
+        document.getElementById('pc-opacity-value').innerText = Math.round(value * 100) + '%';
+      });
+
+      document.getElementById('pc-home').onclick = () => set3DView('oblique');
+      document.getElementById('pc-top').onclick = () => set3DView('top');
+      document.getElementById('pc-front').onclick = () => set3DView('front');
+      document.getElementById('pc-side').onclick = () => set3DView('side');
+      document.getElementById('pc-reset').onclick = () => {
+        camera3d.position.copy(defaultCameraPosition);
+        controls3d.target.copy(defaultTarget);
+        controls3d.update();
+      };
+      document.getElementById('pc-grid').onclick = () => {
+        if (grid3d) grid3d.visible = !grid3d.visible;
+      };
+      document.getElementById('pc-auto').onclick = () => {
+        controls3d.autoRotate = !controls3d.autoRotate;
+      };
+      document.getElementById('pc-full').onclick = () => {
+        const element = document.getElementById('view-3d');
+        if (!document.fullscreenElement) {
+          element.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      };
+    }
+
+    function set3DView(view) {
+      if (!camera3d || !controls3d) return;
+      const maxDim = Math.max(cloudSize.x, cloudSize.y, cloudSize.z);
+      const distance = maxDim * 1.7;
+
+      if (view === 'oblique') camera3d.position.set(distance, distance * 0.75, distance);
+      if (view === 'top') camera3d.position.set(0, distance, 0);
+      if (view === 'front') camera3d.position.set(0, 0, distance);
+      if (view === 'side') camera3d.position.set(distance, 0, 0);
+
+      controls3d.target.set(0, 0, 0);
+      controls3d.update();
+    }
+
+    function animate3D() {
+      if (currentMode !== '3d') return;
+      animationFrameId = requestAnimationFrame(animate3D);
+
+      if (controls3d) controls3d.update();
+      if (renderer3d && scene3d && camera3d) {
+        renderer3d.render(scene3d, camera3d);
+      }
+    }
+
+    function pause3DRenderer() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    function resume3DRenderer() {
+      if (!is3dInitialized) {
+        init3DView();
+      }
+      if (!animationFrameId) {
+        animate3D();
+      }
+    }
+
+    /* =========================================================
+       MODE SWITCHER (2D vs 3D)
+    ========================================================= */
+    window.switchMode = function(mode) {
+      if (mode === currentMode) return;
+      currentMode = mode;
+
+      const view2D = document.getElementById('view-2d');
+      const view3D = document.getElementById('view-3d');
+      const card2D = document.getElementById('card-2d');
+      const card3D = document.getElementById('card-3d');
+      const label = document.getElementById('active-mode-label');
+
+      if (mode === '2d') {
+        view2D.classList.remove('inactive');
+        view2D.classList.add('active');
+        view3D.classList.remove('active');
+        view3D.classList.add('inactive');
+
+        card2D.classList.add('active');
+        card3D.classList.remove('active');
+        label.innerText = `Active Mode: 2D ${activeRasterType.toUpperCase()}`;
+
+        pause3DRenderer();
+
+        setTimeout(() => {
+          map2d.invalidateSize();
+          map2d.fitBounds(SITE_BOUNDS);
+        }, 150);
+      } else {
+        view3D.classList.remove('inactive');
+        view3D.classList.add('active');
+        view2D.classList.remove('active');
+        view2D.classList.add('inactive');
+
+        card3D.classList.add('active');
+        card2D.classList.remove('active');
+        label.innerText = 'Active Mode: 3D Point Cloud';
+
+        resume3DRenderer();
+
+        setTimeout(() => {
+          if (renderer3d && camera3d) {
+            const w = view3D.clientWidth;
+            const h = view3D.clientHeight;
+            camera3d.aspect = w / h;
+            camera3d.updateProjectionMatrix();
+            renderer3d.setSize(w, h);
+          }
+        }, 100);
+      }
+    };
+
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById('left-sidebar');
+      const icon = document.getElementById('collapse-icon');
+
+      if (sidebar.style.width === '44px') {
+        sidebar.style.width = '230px';
+        icon.className = 'fa-solid fa-angles-left';
+      } else {
+        sidebar.style.width = '44px';
+        icon.className = 'fa-solid fa-angles-right';
+      }
+    };
+
+    window.addEventListener('resize', function() {
+      if (currentMode === '2d' && map2d) {
+        map2d.invalidateSize();
+      }
+      if (currentMode === '3d' && renderer3d && camera3d) {
+        const view = document.getElementById('view-3d');
+        camera3d.aspect = view.clientWidth / view.clientHeight;
+        camera3d.updateProjectionMatrix();
+        renderer3d.setSize(view.clientWidth, view.clientHeight);
+      }
+    });
+
+    window.addEventListener('keydown', function(e) {
+      if (currentMode !== '3d') return;
+      if (e.key === '1') set3DView('oblique');
+      if (e.key === '2') set3DView('top');
+      if (e.key === '3') set3DView('front');
+      if (e.key === '4') set3DView('side');
+      if (e.key.toLowerCase() === 'r') {
+        camera3d.position.copy(defaultCameraPosition);
+        controls3d.target.copy(defaultTarget);
+        controls3d.update();
+      }
+      if (e.key.toLowerCase() === 'g' && grid3d) {
+        grid3d.visible = !grid3d.visible;
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', function() {
+      init2DMap();
+    });
+  </script>
+</body>
+</html>
