@@ -30,7 +30,9 @@
       position: fixed;
     }
 
-    /* Welcome / Splash Screen Overlay */
+    /* =========================================================
+       WELCOME / SPLASH SCREEN OVERLAY
+    ========================================================= */
     #welcome-screen {
       position: fixed;
       inset: 0;
@@ -79,7 +81,7 @@
     }
 
     .splash-title {
-      font-size: 20px;
+      font-size: 21px;
       font-weight: 700;
       letter-spacing: 0.8px;
       text-align: center;
@@ -129,7 +131,9 @@
       100% { opacity: 1; transform: scale(1.15); }
     }
 
-    /* Main Viewport Container */
+    /* =========================================================
+       VIEWPORTS & GLASS UI
+    ========================================================= */
     #viewport-wrapper {
       position: absolute;
       top: 0;
@@ -434,21 +438,25 @@
       cursor: pointer;
     }
 
-    /* 3D Floating Control Window */
+    /* =========================================================
+       3D FLOATING CONTROL WINDOW (DESKTOP & MOBILE)
+    ========================================================= */
     #pc-controls {
       position: absolute;
       right: 20px;
       top: 60px;
-      width: 220px;
-      padding: 12px;
+      width: 225px;
+      padding: 14px;
       border-radius: 14px;
-      background: rgba(15, 23, 42, 0.9);
+      background: rgba(15, 23, 42, 0.92);
       backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.55);
       z-index: 250;
       color: #e2e8f0;
       font-size: 11px;
+      transition: all 0.3s ease;
     }
 
     .pc-title {
@@ -457,23 +465,24 @@
       letter-spacing: 0.8px;
       color: #38bdf8;
       text-transform: uppercase;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .pc-row {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .pc-row-header {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       color: #94a3b8;
     }
 
     .pc-row input[type="range"] {
       width: 100%;
       accent-color: #38bdf8;
+      cursor: pointer;
     }
 
     .pc-buttons {
@@ -487,9 +496,13 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #cbd5e1;
       border-radius: 7px;
-      padding: 6px;
+      padding: 7px 4px;
       font-size: 11px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
       transition: 0.2s;
     }
 
@@ -557,7 +570,7 @@
     }
 
     /* =========================================================
-       RESPONSIVE MOBILE / TABLET OPTIMIZATIONS (<768px)
+       RESPONSIVE MOBILE / TABLET (<768px)
     ========================================================= */
     @media (max-width: 768px) {
       .main-header {
@@ -584,7 +597,7 @@
 
       .mode-card {
         width: 100%;
-        height: 48px;
+        height: 46px;
         flex-direction: row;
         gap: 8px;
       }
@@ -593,12 +606,12 @@
         font-size: 16px;
       }
 
-      /* Collapse sidebar on mobile to not crowd small screens */
+      /* Collapsed Sidebar on Mobile */
       .left-sidebar {
         top: auto;
         bottom: 34px;
         left: 12px;
-        width: 44px; /* default collapsed state on phones */
+        width: 44px;
         height: 250px;
       }
 
@@ -606,14 +619,29 @@
         width: calc(100% - 24px);
       }
 
-      /* 3D control panel becomes a bottom drawer sheet on mobile */
+      /* 3D Control Panel: Repositioned as a clean mobile drawer card */
       #pc-controls {
         top: auto;
-        bottom: 38px;
+        bottom: 36px;
         right: 12px;
-        width: 200px;
-        max-height: 50vh;
+        width: 215px;
+        max-height: 48vh;
         overflow-y: auto;
+        padding: 10px 12px;
+      }
+
+      .pc-title {
+        font-size: 10px;
+        margin-bottom: 8px;
+      }
+
+      .pc-row {
+        margin-bottom: 8px;
+      }
+
+      .pc-buttons button {
+        padding: 5px 2px;
+        font-size: 10px;
       }
 
       .bottom-bar {
@@ -622,7 +650,7 @@
       }
 
       .bottom-bar div:first-child {
-        display: none; /* Hide legal text on phones to fit active layer indicator */
+        display: none; /* Hide legal text on phones to maximize readability */
       }
 
       .bottom-bar #coord-display {
@@ -766,7 +794,7 @@
     const SITE_CENTER = [25.211710297341842, 91.06183829276549];
     const SITE_BOUNDS = L.latLngBounds(SW_CORNER, NE_CORNER);
 
-    // Welcome Screen Animation
+    // Welcome Screen Transition Control
     function runWelcomeScreen() {
       const splash = document.getElementById('welcome-screen');
       const progress = document.getElementById('splash-progress');
@@ -784,7 +812,7 @@
       }, 1600);
     }
 
-    // Dynamic Canvas: Cleans black collar for DSM & DTM
+    // Dynamic Canvas Layer: Removes only the black border for DSM & DTM (RGB <= 8 -> alpha 0)
     const TransparentBlackTileLayer = L.TileLayer.extend({
       createTile: function(coords, done) {
         const canvas = document.createElement('canvas');
@@ -958,6 +986,7 @@
           const hasColors = geometry.hasAttribute('color');
           const maxDimension = Math.max(cloudSize.x, cloudSize.y, cloudSize.z);
 
+          // Initial point size starting at 60%
           const baseSize = maxDimension * 0.0012;
           const initialSize = baseSize * 0.6;
 
@@ -967,7 +996,7 @@
             vertexColors: hasColors,
             color: hasColors ? 0xffffff : 0x38bdf8,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.8, // Initial opacity starting at 80%
             depthTest: true,
             depthWrite: true
           });
@@ -1016,11 +1045,13 @@
       is3dInitialized = true;
     }
 
+    // 3D Control Panel: Responsive on both Desktop and Mobile
     function create3DControls() {
       if (document.getElementById('pc-controls')) return;
 
       const panel = document.createElement('div');
       panel.id = 'pc-controls';
+      panel.className = 'glass-card';
       panel.innerHTML = `
         <div class="pc-title">Point Cloud Controls</div>
         <div class="pc-row">
@@ -1212,6 +1243,22 @@
         camera3d.aspect = view.clientWidth / view.clientHeight;
         camera3d.updateProjectionMatrix();
         renderer3d.setSize(view.clientWidth, view.clientHeight);
+      }
+    });
+
+    window.addEventListener('keydown', function(e) {
+      if (currentMode !== '3d') return;
+      if (e.key === '1') set3DView('oblique');
+      if (e.key === '2') set3DView('top');
+      if (e.key === '3') set3DView('front');
+      if (e.key === '4') set3DView('side');
+      if (e.key.toLowerCase() === 'r') {
+        camera3d.position.copy(defaultCameraPosition);
+        controls3d.target.copy(defaultTarget);
+        controls3d.update();
+      }
+      if (e.key.toLowerCase() === 'g' && grid3d) {
+        grid3d.visible = !grid3d.visible;
       }
     });
 
