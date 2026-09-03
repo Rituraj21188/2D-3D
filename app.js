@@ -46,12 +46,12 @@ function init2DMap(){
 
   // Tile configuration without the restrictive bounds parameter
   const tileConfig = {
-    minZoom: 15,
-    maxNativeZoom: 20,
-    maxZoom: 22,
-    tms: false, // Set to false for standard --xyz tiles (flip to true ONLY if you didn't pass --xyz to gdal2tiles)
-    opacity: 1.0
-  };
+  minZoom: 14,
+  maxNativeZoom: 20,   // was 20 already — leave as-is, confirmed correct
+  maxZoom: 22,
+  tms: true,           // was false — this was the actual bug
+  opacity: 1.0
+};
 
   tileLayers = {
     ortho: L.tileLayer('./data/ortho/{z}/{x}/{y}.png', tileConfig),
