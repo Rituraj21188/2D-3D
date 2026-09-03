@@ -287,7 +287,7 @@
       border-radius: 16px;
       z-index: 100;
       display: flex;
-      overflow: hidden;
+      overflow: visible; /* Allows hover tooltips to pop outside */
       transition: width 0.3s ease;
     }
 
@@ -301,6 +301,8 @@
       align-items: center;
       padding: 10px 0;
       gap: 12px;
+      border-top-left-radius: 16px;
+      border-bottom-left-radius: 16px;
     }
 
     .strip-btn, .strip-toggle {
@@ -332,6 +334,7 @@
       flex-direction: column;
       gap: 10px;
       overflow-y: auto;
+      overflow-x: visible;
     }
 
     .section-heading {
@@ -343,11 +346,17 @@
     }
 
     .tool-card {
+      position: relative;
       background: rgba(30, 41, 59, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 10px;
-      overflow: hidden;
       cursor: pointer;
+      transition: border 0.2s, transform 0.2s;
+    }
+
+    .tool-card:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      transform: translateY(-2px);
     }
 
     .tool-card.active {
@@ -358,6 +367,8 @@
     .tool-preview {
       height: 44px;
       background-size: cover;
+      border-top-left-radius: 9px;
+      border-top-right-radius: 9px;
     }
 
     .ortho-bg {
@@ -378,6 +389,8 @@
       justify-content: space-between;
       align-items: center;
       background: rgba(15, 23, 42, 0.85);
+      border-bottom-left-radius: 9px;
+      border-bottom-right-radius: 9px;
     }
 
     .tool-info span {
@@ -392,6 +405,49 @@
 
     .tool-card.active .active-indicator {
       color: #38bdf8;
+    }
+
+    /* Hover Tooltip Popover */
+    .tool-card .card-tooltip {
+      position: absolute;
+      left: calc(100% + 14px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-8px);
+      width: 250px;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 11px;
+      line-height: 1.45;
+      font-weight: 400;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      z-index: 500;
+    }
+
+    /* Tooltip Arrow */
+    .tool-card .card-tooltip::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 6px;
+      border-style: solid;
+      border-color: transparent rgba(56, 189, 248, 0.35) transparent transparent;
+    }
+
+    .tool-card:hover .card-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-50%) translateX(0);
     }
 
     .slider-box {
@@ -477,15 +533,6 @@
       background: #334155;
       border-color: #38bdf8;
       color: white;
-    }
-
-    .pc-stats {
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 10px;
-      line-height: 1.7;
-      color: #94a3b8;
     }
 
     .loading-overlay {
@@ -600,6 +647,9 @@
           <span>Orthomosaic</span>
           <i class="fa-solid fa-circle-check active-indicator"></i>
         </div>
+        <div class="card-tooltip">
+          An orthomosaic map is a high-resolution, geometrically corrected aerial map made by stitching together many overlapping smaller photos.
+        </div>
       </div>
 
       <div class="tool-card layer-option" id="layer-card-dsm" onclick="selectRasterLayer('dsm')">
@@ -608,6 +658,9 @@
           <span>DSM (Surface)</span>
           <i class="fa-solid fa-circle-check active-indicator"></i>
         </div>
+        <div class="card-tooltip">
+          Digital Surface Model (DSM) captures the top of everything sitting on the surface, including vegetation and man-made structures.
+        </div>
       </div>
 
       <div class="tool-card layer-option" id="layer-card-dtm" onclick="selectRasterLayer('dtm')">
@@ -615,6 +668,9 @@
         <div class="tool-info">
           <span>DTM (Terrain)</span>
           <i class="fa-solid fa-circle-check active-indicator"></i>
+        </div>
+        <div class="card-tooltip">
+          A Digital Terrain Model (DTM) shows only the bare-earth ground with all trees and buildings removed.
         </div>
       </div>
 
@@ -677,7 +733,7 @@
     const SITE_CENTER = [25.211710297341842, 91.06183829276549];
     const SITE_BOUNDS = L.latLngBounds(SW_CORNER, NE_CORNER);
 
-    // Welcome Screen Transition Control
+    // Welcome Screen Animation Trigger
     function runWelcomeScreen() {
       const splash = document.getElementById('welcome-screen');
       const progress = document.getElementById('splash-progress');
@@ -910,10 +966,7 @@
           defaultCameraPosition.copy(camera3d.position);
           defaultTarget.copy(controls3d.target);
 
-          const position = geometry.getAttribute('position');
-          const pointCount = position ? position.count : 0;
-
-          create3DControls(pointCount);
+          create3DControls();
           loadingOverlay.style.display = 'none';
         },
         function(xhr) {
@@ -931,7 +984,8 @@
       is3dInitialized = true;
     }
 
-    function create3DControls(pointCount) {
+    // 3D Control Panel: Dimensions and Coordinate System stats removed
+    function create3DControls() {
       if (document.getElementById('pc-controls')) return;
 
       const panel = document.createElement('div');
@@ -961,13 +1015,6 @@
           <button id="pc-grid">Grid</button>
           <button id="pc-auto">Auto Rotate</button>
           <button id="pc-full">Fullscreen</button>
-        </div>
-        <div class="pc-stats">
-          <b>Points:</b> ${pointCount.toLocaleString()}<br />
-          <b>Coordinate system:</b> Z-UP<br />
-          <b>X:</b> ${cloudSize.x.toFixed(2)} m<br />
-          <b>Y:</b> ${cloudSize.y.toFixed(2)} m<br />
-          <b>Z:</b> ${cloudSize.z.toFixed(2)} m
         </div>
       `;
 
