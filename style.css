@@ -28,7 +28,7 @@ html, body {
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
   padding: 20px;
 }
 
@@ -166,7 +166,7 @@ html, body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Header */
+/* Top Navigation Header */
 .main-header {
   position: absolute;
   top: 0;
@@ -278,13 +278,13 @@ html, body {
   color: #38bdf8;
 }
 
-/* Sidebar */
+/* Left Sidebar */
 .left-sidebar {
   position: absolute;
   top: 168px;
   left: 20px;
   bottom: 38px;
-  width: 230px;
+  width: 220px;
   border-radius: 16px;
   z-index: 100;
   display: flex;
@@ -331,7 +331,7 @@ html, body {
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   overflow-y: auto;
 }
 
@@ -363,14 +363,25 @@ html, body {
 }
 
 .tool-preview {
-  height: 36px;
+  height: 38px;
   background-size: cover;
 }
 
-.ortho-bg { background: linear-gradient(135deg, #1e3a8a, #047857); }
-.dsm-bg   { background: linear-gradient(135deg, #ef4444, #eab308, #10b981); }
-.dtm-bg   { background: linear-gradient(135deg, #78350f, #d97706, #fde68a); }
-.contour-bg { background: linear-gradient(135deg, #0284c7, #f59e0b); }
+.ortho-bg {
+  background: linear-gradient(135deg, #1e3a8a, #047857);
+}
+
+.dsm-bg {
+  background: linear-gradient(135deg, #ef4444, #eab308, #10b981);
+}
+
+.dtm-bg {
+  background: linear-gradient(135deg, #78350f, #d97706, #fde68a);
+}
+
+.contour-bg {
+  background: linear-gradient(135deg, #0284c7, #f59e0b);
+}
 
 .tool-info {
   padding: 6px 10px;
@@ -392,41 +403,6 @@ html, body {
 }
 
 .tool-card.active .active-indicator {
-  color: #38bdf8;
-}
-
-.sidebar-btn-row {
-  display: flex;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.sidebar-btn {
-  flex: 1;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
-  border-radius: 8px;
-  padding: 7px 6px;
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: 0.2s;
-}
-
-.sidebar-btn:hover {
-  background: #334155;
-  border-color: #38bdf8;
-  color: #ffffff;
-}
-
-.sidebar-btn.active {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: #38bdf8;
   color: #38bdf8;
 }
 
@@ -454,13 +430,13 @@ html, body {
 }
 
 /* =========================================================
-   3D FLOATING CONTROL WINDOW
+   3D FLOATING CONTROL WINDOW (DESKTOP & MOBILE)
 ========================================================= */
 #pc-controls {
   position: absolute;
   right: 20px;
   top: 60px;
-  width: 235px;
+  width: 225px;
   padding: 14px;
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.92);
@@ -484,13 +460,12 @@ html, body {
 }
 
 .pc-row {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .pc-row-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   margin-bottom: 5px;
   color: #94a3b8;
 }
@@ -501,37 +476,10 @@ html, body {
   cursor: pointer;
 }
 
-.pc-color-picker-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pc-color-picker {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  width: 26px;
-  height: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.pc-color-picker::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.pc-color-picker::-webkit-color-swatch {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-}
-
 .pc-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  margin-top: 10px;
 }
 
 .pc-buttons button {
@@ -587,22 +535,23 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
+/* Leaflet Contour Tooltips */
 .contour-tooltip {
-  background: rgba(15, 23, 42, 0.92) !important;
+  background: rgba(15, 23, 42, 0.9) !important;
   color: #f8fafc !important;
   border: 1px solid rgba(56, 189, 248, 0.5) !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
   font-size: 10px !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-  padding: 1px 5px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+  padding: 2px 6px !important;
 }
 
 .contour-tooltip:before {
-  border-top-color: rgba(15, 23, 42, 0.92) !important;
+  border-top-color: rgba(15, 23, 42, 0.9) !important;
 }
 
-/* Bottom Bar */
+/* Bottom Status Bar */
 .bottom-bar {
   position: absolute;
   bottom: 0;
@@ -633,14 +582,18 @@ html, body {
   cursor: grabbing;
 }
 
-/* Responsive Mobile Layout */
+/* =========================================================
+   RESPONSIVE MOBILE / TABLET (<768px)
+========================================================= */
 @media (max-width: 768px) {
   .main-header {
     padding: 0 14px;
     height: 48px;
   }
 
-  .brand h2 { font-size: 14px; }
+  .brand h2 {
+    font-size: 14px;
+  }
 
   .mode-selector-panel {
     top: 54px;
@@ -662,12 +615,16 @@ html, body {
     gap: 8px;
   }
 
+  .mode-card .card-icon-glow {
+    font-size: 16px;
+  }
+
   .left-sidebar {
     top: auto;
     bottom: 34px;
     left: 12px;
     width: 44px;
-    height: 330px;
+    height: 310px;
   }
 
   .left-sidebar.expanded {
@@ -678,21 +635,37 @@ html, body {
     top: auto;
     bottom: 36px;
     right: 12px;
-    width: 220px;
-    max-height: 52vh;
+    width: 215px;
+    max-height: 48vh;
     overflow-y: auto;
     padding: 10px 12px;
   }
 
-  .pc-title { font-size: 10px; margin-bottom: 8px; }
-  .pc-row { margin-bottom: 6px; }
-  .pc-buttons button { padding: 5px 2px; font-size: 10px; }
+  .pc-title {
+    font-size: 10px;
+    margin-bottom: 8px;
+  }
+
+  .pc-row {
+    margin-bottom: 8px;
+  }
+
+  .pc-buttons button {
+    padding: 5px 2px;
+    font-size: 10px;
+  }
 
   .bottom-bar {
     font-size: 10px;
     padding: 0 12px;
   }
 
-  .bottom-bar div:first-child { display: none; }
-  .bottom-bar #coord-display { width: 100%; text-align: center; }
+  .bottom-bar div:first-child {
+    display: none;
+  }
+
+  .bottom-bar #coord-display {
+    width: 100%;
+    text-align: center;
+  }
 }
