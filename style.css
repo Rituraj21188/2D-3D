@@ -16,7 +16,9 @@ html, body {
   position: fixed;
 }
 
-/* Splash Screen */
+/* =========================================================
+   WELCOME / SPLASH SCREEN OVERLAY
+========================================================= */
 #welcome-screen {
   position: fixed;
   inset: 0;
@@ -26,7 +28,7 @@ html, body {
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
   padding: 20px;
 }
 
@@ -115,7 +117,9 @@ html, body {
   100% { opacity: 1; transform: scale(1.15); }
 }
 
-/* Viewport Containers */
+/* =========================================================
+   VIEWPORTS & GLASS UI
+========================================================= */
 #viewport-wrapper {
   position: absolute;
   top: 0;
@@ -162,7 +166,7 @@ html, body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Navigation Header */
+/* Header */
 .main-header {
   position: absolute;
   top: 0;
@@ -449,7 +453,9 @@ html, body {
   cursor: pointer;
 }
 
-/* 3D Floating Control Window */
+/* =========================================================
+   3D FLOATING CONTROL WINDOW
+========================================================= */
 #pc-controls {
   position: absolute;
   right: 20px;
@@ -581,7 +587,6 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
-/* Custom Leaflet Tooltip for Contours */
 .contour-tooltip {
   background: rgba(15, 23, 42, 0.92) !important;
   color: #f8fafc !important;
@@ -590,7 +595,7 @@ html, body {
   font-size: 10px !important;
   font-weight: 600 !important;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-  padding: 1px 4px !important;
+  padding: 1px 5px !important;
 }
 
 .contour-tooltip:before {
@@ -628,7 +633,7 @@ html, body {
   cursor: grabbing;
 }
 
-/* Mobile Responsiveness */
+/* Responsive Mobile Layout */
 @media (max-width: 768px) {
   .main-header {
     padding: 0 14px;
