@@ -96,6 +96,12 @@
         </div>
       </div>
 
+      <div class="sidebar-btn-row">
+        <button class="sidebar-btn" id="btn-2d-labels" onclick="toggle2DLabels()">
+          <i class="fa-solid fa-tag"></i> Labels Off
+        </button>
+      </div>
+
       <div class="slider-box">
         <div class="slider-header">
           <span>Raster Opacity</span>
@@ -135,9 +141,15 @@
 
     let contourLayer2D = null;
     let is2DContoursVisible = true;
+    let is2DLabelsPermanent = false;
     let cachedContourGeoJSON = null;
+
     let contourLines3D = null;
+    let contourLineMaterial3D = null;
+    let contourLabels3DGroup = null;
     let is3DContoursVisible = true;
+    let is3DLabelsVisible = false;
+    let contour3DColor = '#f59e0b';
 
     let renderer3d = null;
     let scene3d = null;
@@ -146,7 +158,6 @@
     let pointCloudGroup = null;
     let pointCloud3d = null;
     let pointsMaterial3d = null;
-    let grid3d = null;
     let animationFrameId = null;
     let is3dInitialized = false;
 
@@ -299,10 +310,14 @@
     function render2DContours(data) {
       if (!map2d) return;
 
+      if (contourLayer2D) {
+        map2d.removeLayer(contourLayer2D);
+      }
+
       contourLayer2D = L.geoJSON(data, {
         style: function(feature) {
           const coords = feature.geometry.coordinates;
-          const elev = Math.round(coords[0][2] || 0);
+          const elev = Math.round(coords[0][2] || 0)[cite: 1];
           const isIndex = elev % 5 === 0;
 
           return {
@@ -313,9 +328,10 @@
         },
         onEachFeature: function(feature, layer) {
           const coords = feature.geometry.coordinates;
-          const elev = Math.round(coords[0][2] || 0);
+          const elev = Math.round(coords[0][2] || 0)[cite: 1];
           layer.bindTooltip(`${elev} m`, {
-            sticky: true,
+            permanent: is2DLabelsPermanent,
+            sticky: !is2DLabelsPermanent,
             direction: 'top',
             className: 'contour-tooltip'
           });
@@ -339,6 +355,23 @@
           map2d.removeLayer(contourLayer2D);
           card.classList.remove('active');
         }
+      }
+    };
+
+    window.toggle2DLabels = function() {
+      is2DLabelsPermanent = !is2DLabelsPermanent;
+      const btn = document.getElementById('btn-2d-labels');
+
+      if (is2DLabelsPermanent) {
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fa-solid fa-tag"></i> Labels On';
+      } else {
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="fa-solid fa-tag"></i> Labels Off';
+      }
+
+      if (cachedContourGeoJSON) {
+        render2DContours(cachedContourGeoJSON);
       }
     };
 
@@ -443,17 +476,8 @@
           pointCloud3d.frustumCulled = true;
           pointCloudGroup.add(pointCloud3d);
 
-          const gridSize = Math.max(cloudSize.x, cloudSize.y) * 1.5;
-          grid3d = new THREE.GridHelper(gridSize, 20);
-          grid3d.position.y = -cloudSize.z / 2;
-          grid3d.material.transparent = true;
-          grid3d.material.opacity = 0.18;
-          grid3d.visible = false;
-          pointCloudGroup.add(grid3d);
-
           scene3d.add(pointCloudGroup);
 
-          // Build 3D Contours once point cloud group is mounted
           if (cachedContourGeoJSON && !contourLines3D) {
             build3DContours(cachedContourGeoJSON);
           }
@@ -488,26 +512,68 @@
       is3dInitialized = true;
     }
 
+    function create3DTextSprite(text) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 48;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.roundRect(4, 4, 120, 40, 6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 20px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 64, 24);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        depthTest: true,
+        transparent: true
+      });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      const scale = Math.max(cloudSize.x, cloudSize.y) * 0.035;
+      sprite.scale.set(scale * 1.6, scale * 0.6, 1);
+      return sprite;
+    }
+
     function build3DContours(geoJson) {
       if (!pointCloudGroup || !geoJson) return;
 
+      if (contourLines3D) pointCloudGroup.remove(contourLines3D);
+      if (contourLabels3DGroup) pointCloudGroup.remove(contourLabels3DGroup);
+
       const positions = [];
-      const colors = [];
+      contourLabels3DGroup = new THREE.Group();
 
       const latRad = (SITE_CENTER[0] * Math.PI) / 180.0;
       const metersPerDegLat = 111132.92 - 559.82 * Math.cos(2 * latRad) + 1.175 * Math.cos(4 * latRad);
       const metersPerDegLon = 111412.84 * Math.cos(latRad) - 93.5 * Math.cos(3 * latRad);
 
-      const indexColor = new THREE.Color(0xf59e0b);
-      const interColor = new THREE.Color(0x38bdf8);
-
-      geoJson.features.forEach(feature => {
+      geoJson.features.forEach((feature, idx) => {
         const coords = feature.geometry.coordinates;
         if (!coords || coords.length < 2) return;
 
-        const baseElev = Math.round(coords[0][2] || 0);
-        const isIndex = baseElev % 5 === 0;
-        const stroke = isIndex ? indexColor : interColor;
+        const elev = Math.round(coords[0][2] || 0)[cite: 1];
+
+        // Sample text label on index contours or longer segments
+        if ((elev % 5 === 0 || idx % 4 === 0) && coords.length > 3) {
+          const midIndex = Math.floor(coords.length / 2);
+          const pMid = coords[midIndex];
+          const lx = (pMid[0] - SITE_CENTER[1]) * metersPerDegLon;
+          const ly = (pMid[1] - SITE_CENTER[0]) * metersPerDegLat;
+          const lz = pMid[2];[cite: 1]
+
+          const sprite = create3DTextSprite(`${elev}m`);
+          sprite.position.set(lx, ly, lz - cloudCenter.z + 0.8);
+          contourLabels3DGroup.add(sprite);
+        }
 
         for (let i = 0; i < coords.length - 1; i++) {
           const p1 = coords[i];
@@ -515,38 +581,35 @@
 
           const x1 = (p1[0] - SITE_CENTER[1]) * metersPerDegLon;
           const y1 = (p1[1] - SITE_CENTER[0]) * metersPerDegLat;
-          const z1 = p1[2];
+          const z1 = p1[2];[cite: 1]
 
           const x2 = (p2[0] - SITE_CENTER[1]) * metersPerDegLon;
           const y2 = (p2[1] - SITE_CENTER[0]) * metersPerDegLat;
-          const z2 = p2[2];
+          const z2 = p2[2];[cite: 1]
 
           positions.push(
             x1, y1, z1 - cloudCenter.z,
             x2, y2, z2 - cloudCenter.z
-          );
-
-          colors.push(
-            stroke.r, stroke.g, stroke.b,
-            stroke.r, stroke.g, stroke.b
           );
         }
       });
 
       const lineGeometry = new THREE.BufferGeometry();
       lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      lineGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
-      const lineMaterial = new THREE.LineBasicMaterial({
-        vertexColors: true,
+      contourLineMaterial3D = new THREE.LineBasicMaterial({
+        color: new THREE.Color(contour3DColor),
         depthTest: true,
         transparent: true,
-        opacity: 0.85
+        opacity: 0.9
       });
 
-      contourLines3D = new THREE.LineSegments(lineGeometry, lineMaterial);
+      contourLines3D = new THREE.LineSegments(lineGeometry, contourLineMaterial3D);
       contourLines3D.visible = is3DContoursVisible;
+      contourLabels3DGroup.visible = is3DLabelsVisible;
+
       pointCloudGroup.add(contourLines3D);
+      pointCloudGroup.add(contourLabels3DGroup);
     }
 
     function create3DControls() {
@@ -571,13 +634,21 @@
           </div>
           <input id="pc-opacity" type="range" min=".1" max="1" step=".05" value="0.8" />
         </div>
+        <div class="pc-row">
+          <div class="pc-row-header">
+            <span>Contour Color</span>
+            <div class="pc-color-picker-container">
+              <input type="color" id="pc-contour-color" class="pc-color-picker" value="${contour3DColor}" />
+            </div>
+          </div>
+        </div>
         <div class="pc-buttons">
           <button id="pc-home"><i class="fa-solid fa-cube"></i> 3D</button>
           <button id="pc-top"><i class="fa-solid fa-arrow-down"></i> Top</button>
           <button id="pc-front"><i class="fa-solid fa-arrows-up-down"></i> Front</button>
           <button id="pc-side"><i class="fa-solid fa-arrows-left-right"></i> Side</button>
           <button id="pc-contour" class="active"><i class="fa-solid fa-water"></i> Contours</button>
-          <button id="pc-grid">Grid</button>
+          <button id="pc-3d-labels"><i class="fa-solid fa-tag"></i> 3D Labels</button>
           <button id="pc-auto">Auto Rotate</button>
           <button id="pc-full">Fullscreen</button>
         </div>
@@ -601,16 +672,21 @@
         document.getElementById('pc-opacity-value').innerText = Math.round(value * 100) + '%';
       });
 
+      document.getElementById('pc-contour-color').addEventListener('input', function() {
+        contour3DColor = this.value;
+        if (contourLineMaterial3D) {
+          contourLineMaterial3D.color.set(contour3DColor);
+        }
+      });
+
       document.getElementById('pc-home').onclick = () => set3DView('oblique');
       document.getElementById('pc-top').onclick = () => set3DView('top');
       document.getElementById('pc-front').onclick = () => set3DView('front');
       document.getElementById('pc-side').onclick = () => set3DView('side');
-      document.getElementById('pc-grid').onclick = () => {
-        if (grid3d) grid3d.visible = !grid3d.visible;
-      };
       document.getElementById('pc-auto').onclick = () => {
         controls3d.autoRotate = !controls3d.autoRotate;
       };
+
       document.getElementById('pc-contour').onclick = function() {
         is3DContoursVisible = !is3DContoursVisible;
         if (contourLines3D) {
@@ -618,6 +694,15 @@
         }
         this.classList.toggle('active', is3DContoursVisible);
       };
+
+      document.getElementById('pc-3d-labels').onclick = function() {
+        is3DLabelsVisible = !is3DLabelsVisible;
+        if (contourLabels3DGroup) {
+          contourLabels3DGroup.visible = is3DLabelsVisible;
+        }
+        this.classList.toggle('active', is3DLabelsVisible);
+      };
+
       document.getElementById('pc-full').onclick = () => {
         const element = document.getElementById('view-3d');
         if (!document.fullscreenElement) {
@@ -730,7 +815,7 @@
         icon.className = sidebar.classList.contains('expanded') ? 'fa-solid fa-angles-down' : 'fa-solid fa-angles-up';
       } else {
         if (sidebar.style.width === '44px') {
-          sidebar.style.width = '220px';
+          sidebar.style.width = '230px';
           icon.className = 'fa-solid fa-angles-left';
         } else {
           sidebar.style.width = '44px';
