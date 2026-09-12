@@ -16,9 +16,7 @@ html, body {
   position: fixed;
 }
 
-/* =========================================================
-   WELCOME / SPLASH SCREEN OVERLAY
-========================================================= */
+/* Splash Screen */
 #welcome-screen {
   position: fixed;
   inset: 0;
@@ -117,9 +115,7 @@ html, body {
   100% { opacity: 1; transform: scale(1.15); }
 }
 
-/* =========================================================
-   VIEWPORTS & GLASS UI
-========================================================= */
+/* Viewport Containers */
 #viewport-wrapper {
   position: absolute;
   top: 0;
@@ -166,7 +162,7 @@ html, body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Top Navigation Header */
+/* Navigation Header */
 .main-header {
   position: absolute;
   top: 0;
@@ -278,13 +274,13 @@ html, body {
   color: #38bdf8;
 }
 
-/* Left Sidebar */
+/* Sidebar */
 .left-sidebar {
   position: absolute;
   top: 168px;
   left: 20px;
   bottom: 38px;
-  width: 220px;
+  width: 230px;
   border-radius: 16px;
   z-index: 100;
   display: flex;
@@ -331,7 +327,7 @@ html, body {
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   overflow-y: auto;
 }
 
@@ -363,25 +359,14 @@ html, body {
 }
 
 .tool-preview {
-  height: 38px;
+  height: 36px;
   background-size: cover;
 }
 
-.ortho-bg {
-  background: linear-gradient(135deg, #1e3a8a, #047857);
-}
-
-.dsm-bg {
-  background: linear-gradient(135deg, #ef4444, #eab308, #10b981);
-}
-
-.dtm-bg {
-  background: linear-gradient(135deg, #78350f, #d97706, #fde68a);
-}
-
-.contour-bg {
-  background: linear-gradient(135deg, #0284c7, #f59e0b);
-}
+.ortho-bg { background: linear-gradient(135deg, #1e3a8a, #047857); }
+.dsm-bg   { background: linear-gradient(135deg, #ef4444, #eab308, #10b981); }
+.dtm-bg   { background: linear-gradient(135deg, #78350f, #d97706, #fde68a); }
+.contour-bg { background: linear-gradient(135deg, #0284c7, #f59e0b); }
 
 .tool-info {
   padding: 6px 10px;
@@ -403,6 +388,41 @@ html, body {
 }
 
 .tool-card.active .active-indicator {
+  color: #38bdf8;
+}
+
+.sidebar-btn-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.sidebar-btn {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  border-radius: 8px;
+  padding: 7px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: 0.2s;
+}
+
+.sidebar-btn:hover {
+  background: #334155;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.sidebar-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
   color: #38bdf8;
 }
 
@@ -429,14 +449,12 @@ html, body {
   cursor: pointer;
 }
 
-/* =========================================================
-   3D FLOATING CONTROL WINDOW (DESKTOP & MOBILE)
-========================================================= */
+/* 3D Floating Control Window */
 #pc-controls {
   position: absolute;
   right: 20px;
   top: 60px;
-  width: 225px;
+  width: 235px;
   padding: 14px;
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.92);
@@ -460,12 +478,13 @@ html, body {
 }
 
 .pc-row {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .pc-row-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 5px;
   color: #94a3b8;
 }
@@ -476,10 +495,37 @@ html, body {
   cursor: pointer;
 }
 
+.pc-color-picker-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pc-color-picker {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.pc-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.pc-color-picker::-webkit-color-swatch {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+}
+
 .pc-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
+  margin-top: 10px;
 }
 
 .pc-buttons button {
@@ -535,23 +581,23 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
-/* Leaflet Contour Tooltips */
+/* Custom Leaflet Tooltip for Contours */
 .contour-tooltip {
-  background: rgba(15, 23, 42, 0.9) !important;
+  background: rgba(15, 23, 42, 0.92) !important;
   color: #f8fafc !important;
   border: 1px solid rgba(56, 189, 248, 0.5) !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
   font-size: 10px !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-  padding: 2px 6px !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+  padding: 1px 4px !important;
 }
 
 .contour-tooltip:before {
-  border-top-color: rgba(15, 23, 42, 0.9) !important;
+  border-top-color: rgba(15, 23, 42, 0.92) !important;
 }
 
-/* Bottom Status Bar */
+/* Bottom Bar */
 .bottom-bar {
   position: absolute;
   bottom: 0;
@@ -582,18 +628,14 @@ html, body {
   cursor: grabbing;
 }
 
-/* =========================================================
-   RESPONSIVE MOBILE / TABLET (<768px)
-========================================================= */
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
   .main-header {
     padding: 0 14px;
     height: 48px;
   }
 
-  .brand h2 {
-    font-size: 14px;
-  }
+  .brand h2 { font-size: 14px; }
 
   .mode-selector-panel {
     top: 54px;
@@ -615,16 +657,12 @@ html, body {
     gap: 8px;
   }
 
-  .mode-card .card-icon-glow {
-    font-size: 16px;
-  }
-
   .left-sidebar {
     top: auto;
     bottom: 34px;
     left: 12px;
     width: 44px;
-    height: 310px;
+    height: 330px;
   }
 
   .left-sidebar.expanded {
@@ -635,37 +673,21 @@ html, body {
     top: auto;
     bottom: 36px;
     right: 12px;
-    width: 215px;
-    max-height: 48vh;
+    width: 220px;
+    max-height: 52vh;
     overflow-y: auto;
     padding: 10px 12px;
   }
 
-  .pc-title {
-    font-size: 10px;
-    margin-bottom: 8px;
-  }
-
-  .pc-row {
-    margin-bottom: 8px;
-  }
-
-  .pc-buttons button {
-    padding: 5px 2px;
-    font-size: 10px;
-  }
+  .pc-title { font-size: 10px; margin-bottom: 8px; }
+  .pc-row { margin-bottom: 6px; }
+  .pc-buttons button { padding: 5px 2px; font-size: 10px; }
 
   .bottom-bar {
     font-size: 10px;
     padding: 0 12px;
   }
 
-  .bottom-bar div:first-child {
-    display: none;
-  }
-
-  .bottom-bar #coord-display {
-    width: 100%;
-    text-align: center;
-  }
+  .bottom-bar div:first-child { display: none; }
+  .bottom-bar #coord-display { width: 100%; text-align: center; }
 }
